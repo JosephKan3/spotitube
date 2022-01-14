@@ -1,0 +1,25 @@
+.Youtube {
+    position: relative;
+    top: 120px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+
+}
+
+.Youtube button {
+    margin: 10px 10px;
+    background-color: #FF0000;
+    color: white;
+    font-weight: 500;
+    font-size: 18px;
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    border: 0px;
+    width: 240px;
+    cursor: pointer;
+}
+
+.YoutubeButton button:hover {
+    background-color: black;
+
+}

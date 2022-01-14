@@ -1,0 +1,8 @@
+.TrackList {
+    width: 100%;
+    overflow-y: scroll;
+}
+
+.TrackList::-webkit-scrollbar {
+    display: none;
+}

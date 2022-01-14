@@ -1,49 +1,141 @@
 import logo from './logo.svg';
 import './App.css';
 import React from 'react';
+import SearchResults from './components/SearchResults';
+import NavigationBar from './components/NavigationBar';
+import SearchBar from './components/SearchBar';
+import Playlist from './components/Playlist';
+import Spotify from './utils/Spotify';
+import YoutubeButton from './components/YoutubeButton';
 
 class App extends React.Component {
-    render() {
-        return (
-            <div className="App">
-                <div>
-                <body id="page-top">
-                        <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-                                <h1 className="Title">Spot<span className="Highlight">i</span>tube</h1>
-                            <div class="container px-4 px-lg-5">
+    constructor(props) {
+        super(props)
+        
+        this.sampleTracks = [
+            {
+                name: "Gangnam Style",
+                artist: "Psy",
+                album: "Culture", 
+                key: "45675468576324542",
+                image: "https://i.scdn.co/image/ab67616d0000b2736cfc57e5358c5e39e79bccbd"
+            }, {
+                name: "Dynamite",
+                artist: "Captain Sparklez",
+                album: "Minecrack", 
+                key: "4327533534931",
+                image: "https://i.scdn.co/image/ab67616d0000b2736cfc57e5358c5e39e79bccbd"
+            }
+        
+        ]
 
-                                <div class="collapse navbar-collapse" id="navbarResponsive">
-                                    <ul class="navbar-nav ms-auto">
-                                        <li class="nav-item"><a class="nav-link" href="#spotify">Spotify</a></li>
-                                        <li class="nav-item"><a class="nav-link" href="#youtube">Youtube</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </nav>
-                        {/* <!-- Masthead--> */}
-                        <header class="masthead" id="spotify">
-                            <div class="container px-4 px-lg-5 d-flex h-100 align-items-center justify-content-center">
-                                <div class="d-flex justify-content-center">
-                                    <div class="text-center">
-                                        <h1 class="mx-auto my-0 text-uppercase">Playlist Area</h1>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
-                        {/* <!-- About--> */}
-                        <section class="about-section text-center" id="youtube">
-                            <div class="container px-4 px-lg-5">
-                                <div class="row gx-4 gx-lg-5 justify-content-center">
-                                    <div class="col-lg-8">
-                                        <h2 class="text-white mb-4">Youtube Connection</h2>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </body>
+
+        this.state = {
+            searchResults: this.sampleTracks,
+            playlist: {
+                playlistName: "Playlist Name",
+                playlistTracks: []
+            },
+            accessToken: ""
+        }
+
+        this.handleAdd = this.handleAdd.bind(this)
+        this.handleRemoval = this.handleRemoval.bind(this)
+        this.updatePlaylistName = this.updatePlaylistName.bind(this)
+        this.savePlaylist = this.savePlaylist.bind(this)
+        this.search = this.search.bind(this)
+        
+
+
+    }
+
+
+    async search(query) {
+        console.log(`Searching for: ${query}.`)
+        let tracks = await Spotify.search(query)
+        this.setState({searchResults: tracks})
+    }
+
+    
+    handleRemoval(track) {
+        let tracks = this.state.playlist.playlistTracks
+        let trackPosition = -1
+        for (let trackNum = 0; trackNum < tracks.length; trackNum++) {
+            if (track.key === tracks[trackNum].key) {
+                trackPosition = trackNum
+            }
+        }
+        if (trackPosition === -1) {
+            return
+        } else {
+            tracks.splice(trackPosition, 1)
+            console.log(this.state.searchResults)
+            this.setState({playlist: {
+                playlistName: this.state.playlist.playlistName,
+                playlistTracks: tracks
+            }})
+            console.log(this.state.searchResults)
+
+        }
+        
+    }
+
+    handleAdd(track) {
+        let tracks = this.state.playlist.playlistTracks
+        if (tracks.find(searchTrack => {
+            return track.key === searchTrack.key
+        })) {
+            return
+        } else {
+            tracks.push(track)
+            this.setState({playlist: {
+                playlistName: this.state.playlist.playlistName,
+                playlistTracks: tracks
+            }})
+        }
+    }
+
+    updatePlaylistName(name) {
+        this.setState({playlist: {
+            playlistName: name,
+            playlistTracks: this.state.playlist.playlistTracks
+        }})
+    }
+
+    savePlaylist() {
+        let trackUris = this.state.playlist.playlistTracks.map(track => {
+            return track.uri
+        })
+        Spotify.savePlaylist(this.state.playlist.playlistName, trackUris)
+    }
+
+    render() {
+        console.log("RENDER")
+        return (
+            <div className='App'>
+                <div className="SpotifyBox">
+                    <NavigationBar></NavigationBar>
+                    <SearchBar
+                        onSearch={this.search}
+                    />
+                    <YoutubeButton></YoutubeButton>
+                    <div className='Tracks'>
+                        <SearchResults
+                            tracks={this.state.searchResults}
+                            isRemoval={false}
+                            onAdd={this.handleAdd}
+                        />
+                        <Playlist
+                            onNameChange={this.updatePlaylistName}
+                            tracks={this.state.playlist.playlistTracks}
+                            isRemoval={true}
+                            onRemoval={this.handleRemoval}
+                            onSave={this.savePlaylist}
+                        />
+                    </div>
                 </div>
             </div>
-
+ 
           )
     }
 }

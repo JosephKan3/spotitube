@@ -1,0 +1,26 @@
+.SearchBar {
+    color: white;
+    position: relative;
+    top: 100px;
+    display: flex;
+    justify-content: center;
+}
+
+.SearchButton {
+    display: flex;
+    background-color: #003F00;
+    color: white;
+    font-weight: 500;
+    font-size: 18px;
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    border: 0px;
+    /* width: 220px; */
+    align-self: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.SearchButton:hover {
+    background-color: black;
+
+}

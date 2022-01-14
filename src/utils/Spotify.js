@@ -1,5 +1,5 @@
 const clientID = "d4d7f598a5484e4dbe9a51d68a3acf9e"
-const redirect_uri = "http://localhost:3001/"
+const redirect_uri = "http://localhost:3000/"
 // const redirect_uri = "http://spotitube.surge.sh/"
 let accessToken
 
@@ -36,17 +36,18 @@ const Spotify = {
             }
         ).then(
             jsonResponse => {
-                if (!jsonResponse.tracks) {
+                    if (!jsonResponse.tracks) {
                     return []
                 }
                 return jsonResponse.tracks.items.map(
                     track => (
-                        {                        
+                        {
                             name: track.name,
                             artist: track.artists[0].name,
                             album: track.album.name,
                             key: track.id,
-                            uri: track.uri
+                            uri: track.uri,
+                            image: track.album.images[0].url
                         }
                     )
                 )
