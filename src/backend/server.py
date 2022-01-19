@@ -12,105 +12,30 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
-#Youtube Routes
+app = flask.Flask(__name__)
+app.secret_key = ';<z8tMnz)=9oPq<nO"3C[CgF;:BF0b-_}xgjG7wm.36qkJ=om,f&wxq[5,L]'
+app.config['SESSION_COOKIE_NAME'] = 'spotitube-login-session'
 
 
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
+#Youtube OAuth Client
 CLIENT_SECRETS_FILE = "./clientSecret.json"
-
-# This OAuth 2.0 access scope allows for full read/write access to the
-# authenticated user's account and requires requests to use an SSL connection.
 SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
-app = flask.Flask(__name__)
-# Note: A secret key is included in the sample so that it works.
-# If you use this code in your application, replace this with a truly secret
-# key. See https://flask.palletsprojects.com/quickstart/#sessions.
-app.secret_key = ';<z8tMnz)=9oPq<nO"3C[CgF;:BF0b-_}xgjG7wm.36qkJ=om,f&wxq[5,L]'
-app.config['SESSION_COOKIE_NAME'] = 'spotify-login-session'
+#Spotify OAuth Client
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
 
+
+#Youtube Routes
 
 @app.route('/')
 def index():
   return '<h1>Welcome to Spotitube\'s server, select a valid endpoint to continue.<h1>'
-
-# @app.route('/youtube/favorites')
-# def favorites():
-#     if 'credentials' not in flask.session:
-#         return flask.redirect('authorize')
-
-#     # Load credentials from the session.
-#     credentials = google.oauth2.credentials.Credentials(
-#         **flask.session['credentials'])
-
-#     youtube = googleapiclient.discovery.build(
-#         API_SERVICE_NAME, API_VERSION, credentials=credentials)
-#     #API finding liked videos playlist
-#     request = youtube.channels().list(
-#         part="contentDetails",
-#         mine=True
-#     )
-#     response = request.execute()
-#     # likes = response["items"][0]["contentDetails"]["relatedPlaylists"]["likes"]
-#     likes = response["items"][0]["contentDetails"]["relatedPlaylists"]
-
-#     #API finding videos in provided playlist
-#     playlistRequest = youtube.playlistItems().list(
-#         part="snippet",
-#         playlistId=str(likes),
-#         maxResults=5
-#     )
-#     likedResponse = playlistRequest.execute()
-
-#     #Building ID and Title Lists
-#     idList = []
-#     nameList = []
-#     for video in likedResponse["items"]:
-#         idList.append(video["snippet"]["resourceId"]["videoId"])
-#         nameList.append(video["snippet"]["title"])
     
-#     suggestionsDic = {}
-#     idTitleDic = {}
-#     for video in idList:
-#         #API finding related videos to given video ID
-#         relatedRequest = youtube.search().list(
-#             part="snippet",
-#             maxResults=5,
-#             relatedToVideoId=video,
-#             type="video"
-#         )
-#         suggestions = relatedRequest.execute()
-
-#         #Assembling idTitleDic
-#         for suggestion in suggestions["items"]:
-#             idTitleDic.update({suggestion["id"]["videoId"]: suggestion["snippet"]["title"]})
-#             #Assembling suggestionDic
-#             if suggestion["id"]["videoId"] in suggestionsDic:
-#                 suggestionsDic[suggestion["id"]["videoId"]] = suggestionsDic[suggestion["id"]["videoId"]]+1
-#             else:
-#                 suggestionsDic[suggestion["id"]["videoId"]] = 1
-
-#     #Assembling ordered dictionary
-#     orderedSuggestionDic = OrderedDict(sorted(suggestionsDic.items(), key=lambda x:x[1], reverse=True))
-
-#     #Max Suggestion Output
-#     returnCount = 10
-#     counter = 0
-#     returnList = []
-#     for suggestionEntry in orderedSuggestionDic.keys():
-#         returnList.append(suggestionEntry)
-#         counter += 1
-#         if counter == returnCount:
-#             break
-#         else:
-#             continue
-#     flask.session['credentials'] = credentials_to_dict(credentials)
-#     return flask.jsonify(returnList)
-    
-
 @app.route('/youtube/playlist/<playlistID>/<filter>')
 def playlist(playlistID, filter):
     if 'credentials' not in flask.session:
@@ -140,9 +65,6 @@ def playlist(playlistID, filter):
         isMusic = videoDetails["items"][0]["snippet"]["categoryId"]=="10"
         if (isMusic or filter == "false"):
             musicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
-    # Save credentials back to session in case access token was refreshed.
-    # ACTION ITEM: In a production app, you likely want to save these
-    #              credentials in a persistent database instead.
     flask.session['credentials'] = credentials_to_dict(credentials)
 
     return flask.jsonify(musicTitlesPlaylist)
@@ -161,9 +83,6 @@ def test_api_request():
 
     channel = youtube.channels().list(mine=True, part='snippet').execute()
 
-  # Save credentials back to session in case access token was refreshed.
-  # ACTION ITEM: In a production app, you likely want to save these
-  #              credentials in a persistent database instead.
     flask.session['credentials'] = credentials_to_dict(credentials)
 
     return flask.jsonify(**channel)
@@ -175,21 +94,13 @@ def authorize():
   # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES)
-
-  # The URI created here must exactly match one of the authorized redirect URIs
-  # for the OAuth 2.0 client, which you configured in the API Console. If this
-  # value doesn't match an authorized URI, you will get a 'redirect_uri_mismatch'
-  # error.
     flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
 
     authorization_url, state = flow.authorization_url(
-      # Enable offline access so that you can refresh an access token without
-      # re-prompting the user for permission. Recommended for web server apps.
+      # Enable offline access so that you can refresh an access token without re-prompting the user for permission
         access_type='offline',
       # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
-
-  # Store the state so the callback can verify the auth server response.
     flask.session['state'] = state
 
     return flask.redirect(authorization_url)
@@ -197,10 +108,7 @@ def authorize():
 
 @app.route('/youtube/oauth2callback')
 def oauth2callback():
-  # Specify the state when creating the flow in the callback so that it can
-  # verified in the authorization server response.
     state = flask.session['state']
-
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
     flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
@@ -208,10 +116,6 @@ def oauth2callback():
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     authorization_response = flask.request.url
     flow.fetch_token(authorization_response=authorization_response)
-
-  # Store credentials in the session.
-  # ACTION ITEM: In a production app, you likely want to save these
-  #              credentials in a persistent database instead.
     credentials = flow.credentials
     flask.session['credentials'] = credentials_to_dict(credentials)
 
@@ -228,13 +132,6 @@ def credentials_to_dict(credentials):
 
 
 #Spotify Routes
-
-#Spotify OAuth Client
-SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
-
-
-
 
 @app.route('/spotify/search')
 def search():
@@ -265,10 +162,9 @@ def searchAuthorize():
       'client_id': SPOTIFY_CLIENT_ID,
       'client_secret': SPOTIFY_CLIENT_SECRET,
   })
-  # convert the response to JSON
   auth_response_data = auth_response.json()
 
-  # save the access token
+  # Save the access token
   access_token = auth_response_data['access_token']
   flask.session['spotifyToken'] = access_token
   return flask.redirect(flask.url_for('search', query=query), code=307)
@@ -298,8 +194,7 @@ def savePlaylist():
   playlistID = sp.user_playlist_create(userID, playlistName).get("id")
 
   # Filling Playlist
-  # filledPlaylist = sp.playlist_add_items(playlistID, flask.request.get_json()["trackURIs"])
-  filledPlaylist = sp.playlist_add_items(playlistID, [trackURIs])
+  filledPlaylist = sp.playlist_add_items(playlistID, flask.request.get_json()["trackURIs"])
   flask.session.pop("playlistName")
   flask.session.pop("trackURIs")
   return filledPlaylist
@@ -324,8 +219,6 @@ def saveAuthorize():
   token_info = sp_oauth.get_access_token(authCode)
   flask.session["token_info"] = token_info
   return flask.redirect(flask.url_for("savePlaylist"))
-
-# http://127.0.0.1:5000/spotify/savePlaylist?playlistName=HELLO&trackURIs=spotify%3Atrack%3A37XJLOyxY1cMl6lHGcSdZT
 
 def create_spotify_oauth():
   return SpotifyOAuth(
@@ -363,7 +256,4 @@ if __name__ == '__main__':
   # ACTION ITEM for developers:
   #     When running in production *do not* leave this option enabled.
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
-  # Specify a hostname and port that are set as a valid redirect URI
-  # for your API project in the Google API Console.
     app.run('localhost', 8080, debug=True)
