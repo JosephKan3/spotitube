@@ -4,9 +4,10 @@ import os
 import queue
 import flask
 import requests
-from collections import OrderedDict
+import time
 
-
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -16,7 +17,7 @@ import googleapiclient.discovery
 
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
-CLIENT_SECRETS_FILE = "deskSecret.json"
+CLIENT_SECRETS_FILE = "./clientSecret.json"
 
 # This OAuth 2.0 access scope allows for full read/write access to the
 # authenticated user's account and requires requests to use an SSL connection.
@@ -29,18 +30,12 @@ app = flask.Flask(__name__)
 # If you use this code in your application, replace this with a truly secret
 # key. See https://flask.palletsprojects.com/quickstart/#sessions.
 app.secret_key = ';<z8tMnz)=9oPq<nO"3C[CgF;:BF0b-_}xgjG7wm.36qkJ=om,f&wxq[5,L]'
+app.config['SESSION_COOKIE_NAME'] = 'spotify-login-session'
 
 
 @app.route('/')
 def index():
-  return(flask.redirect(flask.url_for("savePlaylist")))
-
-  # return '<h1>Welcome to Spotitube\'s server, select a valid endpoint to continue.<h1>'
-
-@app.route('/youtube/')
-def youtubeIndex():
-  return print_index_table()
-
+  return '<h1>Welcome to Spotitube\'s server, select a valid endpoint to continue.<h1>'
 
 # @app.route('/youtube/favorites')
 # def favorites():
@@ -223,34 +218,6 @@ def oauth2callback():
     return flask.redirect(flask.url_for('playlist'))
 
 
-@app.route('/youtube/revoke')
-def revoke():
-    if 'credentials' not in flask.session:
-        return ('You need to <a href="/authorize">authorize</a> before ' +
-            'testing the code to revoke credentials.')
-
-    credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
-
-    revoke = requests.post('https://oauth2.googleapis.com/revoke',
-        params={'token': credentials.token},
-        headers = {'content-type': 'application/x-www-form-urlencoded'})
-
-    status_code = getattr(revoke, 'status_code')
-    if status_code == 200:
-        return('Credentials successfully revoked.' + print_index_table())
-    else:
-        return('An error occurred.' + print_index_table())
-
-
-@app.route('/youtube/clear')
-def clear_credentials():
-    if 'credentials' in flask.session:
-        del flask.session['credentials']
-    return ('Credentials have been cleared.<br><br>' +
-        print_index_table())
-
-
 def credentials_to_dict(credentials):
     return {'token': credentials.token,
         'refresh_token': credentials.refresh_token,
@@ -259,38 +226,22 @@ def credentials_to_dict(credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes}
 
-def print_index_table():
-    return ('<table>' +
-        '<tr><td><a href="/test">Test an API request</a></td>' +
-        '<td>Submit an API request and see a formatted JSON response. ' +
-        '    Go through the authorization flow if there are no stored ' +
-        '    credentials for the user.</td></tr>' +
-        '<tr><td><a href="/authorize">Test the auth flow directly</a></td>' +
-        '<td>Go directly to the authorization flow. If there are stored ' +
-        '    credentials, you still might not be prompted to reauthorize ' +
-        '    the application.</td></tr>' +
-        '<tr><td><a href="/revoke">Revoke current credentials</a></td>' +
-        '<td>Revoke the access token associated with the current user ' +
-        '    session. After revoking credentials, if you go to the test ' +
-        '    page, you should see an <code>invalid_grant</code> error.' +
-        '</td></tr>' +
-        '<tr><td><a href="/clear">Clear Flask session credentials</a></td>' +
-        '<td>Clear the access token currently stored in the user session. ' +
-        '    After clearing the token, if you <a href="/test">test the ' +
-        '    API request</a> again, you should go back to the auth flow.' +
-        '</td></tr></table>')
-
 
 #Spotify Routes
 
 #Spotify OAuth Client
-clientID = os.environ.get("SPOTIFY_CLIENT_ID") or "d4d7f598a5484e4dbe9a51d68a3acf9e"
-clientSecret = os.environ.get("SPOTIFY_CLIENT_SECRET") or "250f4559c6cc4313b90d39f7c18442a9"
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
 
-@app.route('/spotify/search/<string:query>')
-def search(query):
+
+
+
+@app.route('/spotify/search')
+def search():
+  query = flask.request.args.get("query")
   if 'spotifyToken' not in flask.session:
-    return flask.redirect('searchAuthorize')
+    return flask.redirect(flask.url_for('searchAuthorize', query=query), code=307)
+
   headers = {'Authorization': 'Bearer {token}'.format(token=flask.session['spotifyToken'])}
   response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=query), headers=headers)
   jsonResponse = response.json()
@@ -308,40 +259,103 @@ def search(query):
 
 @app.route('/spotify/searchAuthorize')
 def searchAuthorize():
+  query = flask.request.args.get("query")
   auth_response = requests.post('https://accounts.spotify.com/api/token', {
       'grant_type': 'client_credentials',
-      'client_id': clientID,
-      'client_secret': clientSecret,
+      'client_id': SPOTIFY_CLIENT_ID,
+      'client_secret': SPOTIFY_CLIENT_SECRET,
   })
-
   # convert the response to JSON
   auth_response_data = auth_response.json()
 
   # save the access token
   access_token = auth_response_data['access_token']
   flask.session['spotifyToken'] = access_token
-  return flask.redirect(flask.url_for('search'))
+  return flask.redirect(flask.url_for('search', query=query), code=307)
 
 
 @app.route('/spotify/savePlaylist', methods=["GET"])
 def savePlaylist():
-  if 'spotifyOAuthToken' not in flask.session:
-    return flask.redirect('saveAuthorize')
-  OAuthToken = flask.session['spotifyOAuthToken']
-  headers = {'Authorization': 'Bearer {token}'.format(token=flask.session['spotifyToken'])}
-  # Request for UserID
-  userID = requests.get("https://api.spotify.com/v1/me", headers=headers).json()
-  print(userID)
-  return(userID)
-  
+  # Getting query arguments if not already stored in session
+  if "playlistName" not in flask.session:
+    flask.session["playlistName"] = flask.request.args.get("playlistName")
+  if "trackURIs" not in flask.session:
+    flask.session["trackURIs"] = flask.request.args.get("trackURIs")
+  playlistName = flask.session["playlistName"]
+  trackURIs = flask.session["trackURIs"]
+
+  # Checking if access token is stored in session
+  flask.session["token_info"], authorized = getSpotAccessToken()
+  flask.session.modified = True
+  if not authorized:
+    return flask.redirect(flask.url_for("spotOAuthLogin"), code=307)
+
+  sp = spotipy.Spotify(auth=flask.session.get("token_info").get("access_token"))
+  # Getting User ID
+  userID = sp.me().get("id")
+
+  # Creating Playlist
+  playlistID = sp.user_playlist_create(userID, playlistName).get("id")
+
+  # Filling Playlist
+  # filledPlaylist = sp.playlist_add_items(playlistID, flask.request.get_json()["trackURIs"])
+  filledPlaylist = sp.playlist_add_items(playlistID, [trackURIs])
+  flask.session.pop("playlistName")
+  flask.session.pop("trackURIs")
+  return filledPlaylist
+
+
+@app.route('/spotify/spotOAuthLogin')
+def spotOAuthLogin():
+  sp_oauth = create_spotify_oauth()
+  oauth_url = sp_oauth.get_authorize_url()
+  return flask.redirect(oauth_url)
+
 
 @app.route('/spotify/saveAuthorize')
 def saveAuthorize():
-  redirectURI = "http://127.0.0.1:5000/"
-  params = "?client_id=${clientID}&response_type=token&scope=playlist-modify-public&redirect_uri=${redirect_uri}".format(clientID=clientID, redirect_uri=redirectURI)
-  uri = 'https://accounts.spotify.com/authorize' + params
-  print(uri)
-  return flask.redirect(redirectURI)
+  sp_oauth = create_spotify_oauth()
+  playlistName = flask.session["playlistName"]
+  trackURIs = flask.session["trackURIs"]
+  flask.session.clear()
+  flask.session["playlistName"] = playlistName 
+  flask.session["trackURIs"] = trackURIs 
+  authCode = flask.request.args.get("code")
+  token_info = sp_oauth.get_access_token(authCode)
+  flask.session["token_info"] = token_info
+  return flask.redirect(flask.url_for("savePlaylist"))
+
+# http://127.0.0.1:5000/spotify/savePlaylist?playlistName=HELLO&trackURIs=spotify%3Atrack%3A37XJLOyxY1cMl6lHGcSdZT
+
+def create_spotify_oauth():
+  return SpotifyOAuth(
+    client_id=SPOTIFY_CLIENT_ID,
+    client_secret=SPOTIFY_CLIENT_SECRET,
+    redirect_uri=flask.url_for("saveAuthorize", _external=True),
+    scope="playlist-modify-public,playlist-modify-private"
+  )
+
+def getSpotAccessToken():
+  validToken = False
+  token_info = flask.session.get("token_info", {})
+
+  # Checking if session has a token
+  if not (flask.session.get("token_info", False)):
+    token_valud = False
+    return token_info, validToken
+
+  # Checking if token is expired
+  currentTime = int(time.time())
+  tokenExpired = flask.session.get("token_info").get("expires_at") - currentTime < 30
+
+  # Refreshing token if expired
+  if (tokenExpired):
+    sp_oauth = create_spotify_oauth()
+    token_info = sp_oauth.refresh_access_token(flask.session.get("token_info").get("refresh_token"))
+
+  validToken = True
+  return token_info, validToken
+
 
 
 if __name__ == '__main__':
