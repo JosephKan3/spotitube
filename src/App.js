@@ -57,26 +57,21 @@ class App extends React.Component {
             if (this.state.youtubeRedirect) {
                 console.log("HELLOOOOO")
                 let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                let authUrl = JSON.parse(localStorage.getItem("authUrl"))
-                console.log(authUrl)
+                let authState = decodeURIComponent(window.location.href.match(/state=([^&]*)/)[1])
                 console.log(authCode)
+                console.log(authState)
 
-                axios.get("http://127.0.0.1:5000/youtube/token", {params: {authCode:authCode, authState:authUrl}}).then((response) => {
-                    this.setState({
-                        youtubeAccessToken: response.request.responseText,
-                        youtubeRedirect: false
-                    }, () => {
-                        localStorage.setItem("state", JSON.stringify(this.state))
-                    })
+                axios.get("http://127.0.0.1:5000/youtube/token", {params: {authCode:authCode, authState:authState}}).then((response) => {
+                    this.state.youtubeAccessToken = response.request.responseText
+                    this.state.youtubeRedirect = false
+                    localStorage.setItem("state", JSON.stringify(this.state))
                 })
             }
             if (this.state.spotifyRedirect) {
                 let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
                 axios.get("http://127.0.0.1:5000/spotify/token", {params: {authCode:authCode}}).then((response) => {
-                    this.setState({
-                        spotifyAccessToken: response.request.responseText,
-                        spotifyRedirect: false
-                    })
+                    this.state.spotifyAccessToken = response.request.responseText
+                    this.state.spotifyRedirect = false
                 })
             }
         }
@@ -150,7 +145,6 @@ class App extends React.Component {
                 localStorage.setItem("state", JSON.stringify(this.state))
                 axios.get("http://127.0.0.1:5000/youtube/getAuthUrl").then((response) => {
                     let authURL = response.request.responseText
-                    localStorage.setItem("authUrl", JSON.stringify(authURL))
                     window.location.replace(authURL)
                 })
             })
