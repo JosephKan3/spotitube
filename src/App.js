@@ -1,4 +1,5 @@
 import logo from './logo.svg';
+import axios from 'axios'
 import './App.css';
 import React from 'react';
 import SearchResults from './components/SearchResults';
@@ -47,38 +48,24 @@ class App extends React.Component {
         this.savePlaylist = this.savePlaylist.bind(this)
         this.search = this.search.bind(this)
         this.findYoutubePlaylist = this.findYoutubePlaylist.bind(this)
+        this.getYoutubeAccessToken = this.getYoutubeAccessToken.bind(this)
+        this.getSpotifyAccessToken = this.getSpotifyAccessToken.bind(this)
+        this.getYoutubeAuthUrl = this.getYoutubeAuthUrl.bind(this)
 
 
-        // axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
         if (localState != null) {
             this.state = localState
-            // Fetching auth tokens following redirect
-            if (this.state.youtubeRedirect) {
-                let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                let authState = decodeURIComponent(window.location.href.match(/state=([^&]*)/)[1])
-                console.log("COUNT")
-                let count = 0
-                fetch(`http://127.0.0.1:5000/youtube/token?authCode=${authCode}&authState=${authState}`).then((response) => {
-                    localStorage.setItem("state", JSON.stringify(this.state))
-                    count++
-                    console.log(response)
-                    this.state.youtubeCredentials = response.data
-                    this.state.youtubeRedirect = false
-                    console.log(count)
-                })
-            }
-            if (this.state.spotifyRedirect) {
-                let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                fetch(`http://127.0.0.1:5000/spotify/token?authCode=${authCode}`).then((response) => {
-                    this.state.spotifyToken = response.request.responseText
-                    this.state.spotifyRedirect = false
-                })
-            }
         }
-        localStorage.setItem("state", JSON.stringify(this.state))
+        // if (this.state.youtubeRedirect) {
+        //     this.getYoutubeAccessToken()
+        // }
+        // if (this.state.spotifyRedirect) {
+        //     this.getSpotifyAccessToken()
+        // }
     }
+
 
     async search(query) {
         console.log(`Searching for: ${query}.`)
@@ -136,41 +123,93 @@ class App extends React.Component {
         }})
     }
 
-    findYoutubePlaylist(playlistID) {
-        // Saving local state before redirect
-        // Starting Youtube Authorization Code Flow if no token
-        if (this.state.youtubeCredentials !== {}) {
-            this.setState({youtubeRedirect: true}, () => {
-                localStorage.setItem("state", JSON.stringify(this.state))
-                fetch(`http://127.0.0.1:5000/youtube/getAuthUrl`).then(response => {
-                    return response.text()
-                }).then(responseText => {
-                    window.location.replace(responseText)
-                })
 
-            })
-        } else {
-            fetch(`http://127.0.0.1:5000/youtube/playlist?playlistID=${playlistID}&filter=${false}&credentials=${this.state.youtubeCredentials}`).then((response) => {
-                let youtubeTrackList = response.data.tracks
-                for (let i = 0; i < youtubeTrackList.length; i++) {
-                    // TODO: Handle response
-                    console.log(i)
-                }
+
+    getSpotifyAccessToken() {
+        if (this.state.spotifyRedirect) {
+            let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
+            axios.get("http://127.0.0.1:5000/youtube/token", {params: {
+                authCode:authCode,
+            }}).then(response => {
+                console.log(response)
+                this.setState({
+                    spotifyToken: response.request.responseText,
+                    spotifyRedirect: false
+                }, () => {
+                    localStorage.setItem("state", JSON.stringify(this.state))
+                })
             })
         }
     }
 
-    getYoutubeAccessToken() {
-        fetch(`http://127.0.0.1:5000/youtube/playlist/PLQAo3WtfNEjVPqQXmCFpt3gyLb9abaq_2/false`).then((response) => {
-            let authURL = response.request.responseText
-            // window.open(authURL)
-            // console.log(this.state)
-            localStorage.setItem("state", this.state)
-            // console.log(localStorage.getItem("state"))
-            window.location.replace(authURL)
-            // console.log(authURL)
+    getYoutubeAuthUrl() {
+        this.setState({youtubeRedirect: true}, () => {
+            localStorage.setItem("state", JSON.stringify(this.state))
+            fetch(`http://127.0.0.1:5000/youtube/getAuthUrl`).then(response => {
+                return response.text()
+            }).then(responseText => {
+                window.location.replace(responseText)
+            })
+
         })
     }
+
+    getYoutubeAccessToken() {
+        return new Promise((resolve, reject) => {
+            try {
+                let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
+                let authState = decodeURIComponent(window.location.href.match(/state=([^&]*)/)[1])
+                axios.get("http://127.0.0.1:5000/youtube/token", {params: {
+                    authCode:authCode,
+                    authState:authState
+                }}).then(response => {
+                    let credentials = JSON.parse(response.request.responseText)
+                    this.setState({
+                        youtubeCredentials: credentials,
+                        youtubeRedirect: false
+                    }, () => {
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                        resolve(true)
+                    })
+                }).catch(error => {
+                    reject(false)
+                })
+            } catch {
+                reject(false)
+            }
+        })
+    }
+
+    async findYoutubePlaylist(playlistID) {
+        // If authenticated
+        let hasCreds = this.state.youtubeCredentials.token !== undefined
+        let tokenFound = false
+        if (!hasCreds) {
+            // If creds are not stored, check for an auth code in URL
+            tokenFound = await this.getYoutubeAccessToken().catch(() => {
+                tokenFound = false
+            })
+        }
+        // If either credentials or auth code are found, send request
+        if (tokenFound || hasCreds) {
+            axios.get("http://127.0.0.1:5000/youtube/playlist", {params: {
+                playlistID:playlistID,
+                filter: false,
+                credentials:this.state.youtubeCredentials
+            }}).then(response => {
+                let youtubeTrackList = response.data
+                for (let i = 0; i < youtubeTrackList.length; i++) {
+                    // TODO: Handle response with Spotify
+                    console.log(youtubeTrackList[i])
+                }
+            })
+        // Begin auth code flow
+        } else {
+            this.getYoutubeAuthUrl()
+        }
+    }
+
+
 
     async savePlaylist() {
         let trackUris = this.state.playlist.playlistTracks.map(track => {
@@ -182,7 +221,6 @@ class App extends React.Component {
     }
 
     render() {
-        console.log("RENDER")
         return (
             <div className='App'>
                 <div className="SpotifyBox">
@@ -192,6 +230,7 @@ class App extends React.Component {
                     />
                     <YoutubeButton
                         onFindYoutube={this.findYoutubePlaylist}
+                        onSign={this.getYoutubeAuthUrl}
                     ></YoutubeButton>
                     <div className='Tracks'>
                         <SearchResults

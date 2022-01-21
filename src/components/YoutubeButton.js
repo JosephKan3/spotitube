@@ -24,13 +24,15 @@ class YoutubeButton extends React.Component {
         return(
             <div className='Youtube'>
                 <button
-                    onClick={this.handleSearchPlaylist}
+                    onClick={this.props.onSign}
                 >Sign in to Youtube</button>
                 <input
                     placeholder="Enter Youtube Playlist ID"
                     onChange={this.handlePlaylistChange}
                 />
-                <button>Import Youtube Preferences</button>
+                <button
+                    onClick={this.handleSearchPlaylist}
+                >Import Youtube Preferences</button>
                 <button>Import Youtube Playlist</button>
             </div>
         )

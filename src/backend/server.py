@@ -75,7 +75,7 @@ def getYoutubeAccessToken():
 
 @app.route('/youtube/playlist')
 def playlist():
-    fullCred = getFullCredentials(flask.request.args.get("credentials"))
+    fullCred = getFullCredentials(json.loads(flask.request.args.get("credentials")))
   # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
         **fullCred)
@@ -104,23 +104,6 @@ def playlist():
 
     return flask.jsonify(musicTitlesPlaylist)
 
-
-@app.route('/youtube/oauth2callback')
-def oauth2callback():
-    state = flask.session['state']
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-    flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
-
-  # Use the authorization server's response to fetch the OAuth 2.0 tokens.
-    authorization_response = flask.request.url
-    flow.fetch_token(authorization_response=authorization_response)
-    credentials = flow.credentials
-    flask.session['credentials'] = credentials_to_dict(credentials)
-
-    return flask.redirect(flask.url_for('playlist'))
-
-
 def credentials_to_dict(credentials):
     return {'token': credentials.token,
         'refresh_token': credentials.refresh_token,
@@ -128,14 +111,16 @@ def credentials_to_dict(credentials):
         'scopes': credentials.scopes}
 
 def getFullCredentials(partialCredentials):
-    f = open(CLIENT_SECRETS_FILE)
-    clientSecretData = json.load(f)
-    return {'token': partialCredentials.token,
-        'refresh_token': partialCredentials.refresh_token,
-        'token_uri': partialCredentials.token_uri,
-        'client_id': clientSecretData.client_id,
-        'client_secret': clientSecretData.client_secret,
-        'scopes': partialCredentials}
+    f = open(CLIENT_SECRETS_FILE, "r")
+    clientSecretData = json.load(f)["web"]
+    print(clientSecretData)
+    return {
+      'token': partialCredentials["token"],
+      'refresh_token': partialCredentials["refresh_token"],
+      'token_uri': partialCredentials["token_uri"],
+      'client_id': clientSecretData["client_id"],
+      'client_secret': clientSecretData["client_secret"],
+      'scopes': partialCredentials["scopes"]}
 
 
 #Spotify Routes
