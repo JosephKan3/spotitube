@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import queue
 import flask
 import requests
 import time
@@ -20,6 +19,7 @@ app.config['SESSION_COOKIE_NAME'] = 'spotitube-login-session'
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
 #Youtube OAuth Client
+REDIRECT_URI="http://localhost:3000/"
 CLIENT_SECRETS_FILE = "./clientSecret.json"
 SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
@@ -35,11 +35,41 @@ SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
 @app.route('/')
 def index():
   return '<h1>Welcome to Spotitube\'s server, select a valid endpoint to continue.<h1>'
+
+@app.route('/youtube/getAuthUrl')
+def getYoutubeAuthUrl():
+  # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE, scopes=SCOPES)
+    # flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
+    flow.redirect_uri = REDIRECT_URI
+
+    authorization_url, state = flow.authorization_url(
+      # Enable offline access so that you can refresh an access token without re-prompting the user for permission
+        access_type='offline',
+      # Enable incremental authorization. Recommended as a best practice.
+        include_granted_scopes='true')
+    flask.session['state'] = state
+    return authorization_url
+
+
+@app.route('/youtube/token')
+def getYoutubeAccessToken():
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri="http://localhost:3000")
+    # Use the authorization server's response to fetch the OAuth 2.0 tokens.
+    flow.fetch_token(code=flask.request.args.get("authCode"))
+    credentials = flow.credentials
+    flask.session['credentials'] = credentials_to_dict(credentials)
+
+    return flask.redirect(flask.url_for('playlist'))
+
+
     
-@app.route('/youtube/playlist/<playlistID>/<filter>')
+@app.route('/youtube/playlist')
 def playlist(playlistID, filter):
     if 'credentials' not in flask.session:
-        return flask.redirect('authorize')
+        return flask.redirect(flask.url_for('authorize'))
 
   # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
@@ -68,42 +98,6 @@ def playlist(playlistID, filter):
     flask.session['credentials'] = credentials_to_dict(credentials)
 
     return flask.jsonify(musicTitlesPlaylist)
-
-@app.route('/youtube/test')
-def test_api_request():
-    if 'credentials' not in flask.session:
-        return flask.redirect('authorize')
-
-  # Load credentials from the session.
-    credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
-
-    youtube = googleapiclient.discovery.build(
-        API_SERVICE_NAME, API_VERSION, credentials=credentials)
-
-    channel = youtube.channels().list(mine=True, part='snippet').execute()
-
-    flask.session['credentials'] = credentials_to_dict(credentials)
-
-    return flask.jsonify(**channel)
-
-
-
-@app.route('/youtube/authorize')
-def authorize():
-  # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES)
-    flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
-
-    authorization_url, state = flow.authorization_url(
-      # Enable offline access so that you can refresh an access token without re-prompting the user for permission
-        access_type='offline',
-      # Enable incremental authorization. Recommended as a best practice.
-        include_granted_scopes='true')
-    flask.session['state'] = state
-
-    return flask.redirect(authorization_url)
 
 
 @app.route('/youtube/oauth2callback')
@@ -255,5 +249,7 @@ if __name__ == '__main__':
   # When running locally, disable OAuthlib's HTTPs verification.
   # ACTION ITEM for developers:
   #     When running in production *do not* leave this option enabled.
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    app.run('localhost', 8080, debug=True)
+    # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    # app.run('localhost', 8080, debug=True)
+    port = int(os.environ.get('PORT'))
+    app.run(host="0.0.0.0", port=port)
