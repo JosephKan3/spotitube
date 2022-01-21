@@ -4,16 +4,20 @@ import os
 import flask
 import requests
 import time
+import json
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from flask_cors import CORS, cross_origin
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
 app = flask.Flask(__name__)
+cors = CORS(app)
 app.secret_key = ';<z8tMnz)=9oPq<nO"3C[CgF;:BF0b-_}xgjG7wm.36qkJ=om,f&wxq[5,L]'
 app.config['SESSION_COOKIE_NAME'] = 'spotitube-login-session'
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 # This variable specifies the name of a file that contains the OAuth 2.0
@@ -50,43 +54,38 @@ def getYoutubeAuthUrl():
       # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
     flask.session['state'] = state
-    return authorization_url
+    print(authorization_url)
+    return (authorization_url)
 
 
 @app.route('/youtube/token')
 def getYoutubeAccessToken():
+
+    print(flask.request)
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=flask.request.args.get("authState"))
-    flow.redirect_uri = "http://127.0.0.1:5000/youtube/token"
+    flow.redirect_uri = REDIRECT_URI
     # Use the authorization server's response to fetch the OAuth 2.0 tokens.
-    try: 
-      flow.fetch_token(code=flask.request.args.get("authCode"))
-      credentials = flow.credentials
-      flask.session['credentials'] = credentials_to_dict(credentials)
-
-    except Exception as e:
-      print(e)
-
-    # return flask.redirect(flask.url_for('playlist'))
-    return ("HI")
+    flow.fetch_token(code=flask.request.args.get("authCode"))
+    credentials = flow.credentials
+    flask.session['credentials'] = credentials_to_dict(credentials)
+    return credentials_to_dict(credentials)
 
 
 
 @app.route('/youtube/playlist')
-def playlist(playlistID, filter):
-    if 'credentials' not in flask.session:
-        return flask.redirect(flask.url_for('authorize'))
-
+def playlist():
+    fullCred = getFullCredentials(flask.request.args.get("credentials"))
   # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
+        **fullCred)
 
     youtube = googleapiclient.discovery.build(
         API_SERVICE_NAME, API_VERSION, credentials=credentials)
     # Requesting Video IDs from Playlist
     playlist = youtube.playlistItems().list(
         part="contentDetails",
-        playlistId=playlistID,
+        playlistId=flask.request.args.get("playlistID"),
         maxResults=5
     ).execute()
 
@@ -99,7 +98,7 @@ def playlist(playlistID, filter):
             id=video["contentDetails"]["videoId"]
         ).execute()
         isMusic = videoDetails["items"][0]["snippet"]["categoryId"]=="10"
-        if (isMusic or filter == "false"):
+        if (isMusic or flask.request.args.get("filter") == "false"):
             musicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
     flask.session['credentials'] = credentials_to_dict(credentials)
 
@@ -126,9 +125,17 @@ def credentials_to_dict(credentials):
     return {'token': credentials.token,
         'refresh_token': credentials.refresh_token,
         'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
         'scopes': credentials.scopes}
+
+def getFullCredentials(partialCredentials):
+    f = open(CLIENT_SECRETS_FILE)
+    clientSecretData = json.load(f)
+    return {'token': partialCredentials.token,
+        'refresh_token': partialCredentials.refresh_token,
+        'token_uri': partialCredentials.token_uri,
+        'client_id': clientSecretData.client_id,
+        'client_secret': clientSecretData.client_secret,
+        'scopes': partialCredentials}
 
 
 #Spotify Routes

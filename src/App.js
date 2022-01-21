@@ -1,5 +1,4 @@
 import logo from './logo.svg';
-import axios from 'axios'
 import './App.css';
 import React from 'react';
 import SearchResults from './components/SearchResults';
@@ -35,9 +34,9 @@ class App extends React.Component {
                 playlistName: "Playlist Name",
                 playlistTracks: []
             },
-            youtubeAccessToken: "",
+            youtubeCredentials: {},
             youtubeRedirect: false,
-            spotifyAccessToken: "",
+            spotifyToken: {},
             spotifyRedirect: false
 
         }
@@ -49,28 +48,31 @@ class App extends React.Component {
         this.search = this.search.bind(this)
         this.findYoutubePlaylist = this.findYoutubePlaylist.bind(this)
 
+
+        // axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
         if (localState != null) {
             this.state = localState
             // Fetching auth tokens following redirect
             if (this.state.youtubeRedirect) {
-                console.log("HELLOOOOO")
                 let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
                 let authState = decodeURIComponent(window.location.href.match(/state=([^&]*)/)[1])
-                console.log(authCode)
-                console.log(authState)
-
-                axios.get("http://127.0.0.1:5000/youtube/token", {params: {authCode:authCode, authState:authState}}).then((response) => {
-                    this.state.youtubeAccessToken = response.request.responseText
-                    this.state.youtubeRedirect = false
+                console.log("COUNT")
+                let count = 0
+                fetch(`http://127.0.0.1:5000/youtube/token?authCode=${authCode}&authState=${authState}`).then((response) => {
                     localStorage.setItem("state", JSON.stringify(this.state))
+                    count++
+                    console.log(response)
+                    this.state.youtubeCredentials = response.data
+                    this.state.youtubeRedirect = false
+                    console.log(count)
                 })
             }
             if (this.state.spotifyRedirect) {
                 let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                axios.get("http://127.0.0.1:5000/spotify/token", {params: {authCode:authCode}}).then((response) => {
-                    this.state.spotifyAccessToken = response.request.responseText
+                fetch(`http://127.0.0.1:5000/spotify/token?authCode=${authCode}`).then((response) => {
+                    this.state.spotifyToken = response.request.responseText
                     this.state.spotifyRedirect = false
                 })
             }
@@ -81,9 +83,7 @@ class App extends React.Component {
     async search(query) {
         console.log(`Searching for: ${query}.`)
         window.open("https://spotitubev2.herokuapp.com/spotify/search?query=Uptown%20funk")
-        axios.get("https://spotitubev2.herokuapp.com/spotify/search", {params: {
-            query: query
-        }}).then((response) => {
+        fetch(`https://spotitubev2.herokuapp.com/spotify/search?query=${query}`).then((response) => {
             window.open(response)
             console.log(response)
             this.setState({searchResults: response})
@@ -139,33 +139,36 @@ class App extends React.Component {
     findYoutubePlaylist(playlistID) {
         // Saving local state before redirect
         // Starting Youtube Authorization Code Flow if no token
-        console.log(this.state.youtubeAccessToken)
-        if (!this.state.youtubeAccessToken) {
+        if (this.state.youtubeCredentials !== {}) {
             this.setState({youtubeRedirect: true}, () => {
                 localStorage.setItem("state", JSON.stringify(this.state))
-                axios.get("http://127.0.0.1:5000/youtube/getAuthUrl").then((response) => {
-                    let authURL = response.request.responseText
-                    window.location.replace(authURL)
+                fetch(`http://127.0.0.1:5000/youtube/getAuthUrl`).then(response => {
+                    return response.text()
+                }).then(responseText => {
+                    window.location.replace(responseText)
                 })
-            })
 
+            })
         } else {
-            axios.get("http://127.0.0.1:5000/youtube/playlist", {params: {playlistID: playlistID, filter: false}}).then((response) => {
-                let authURL = response.request.responseText
-                // TODO: Handle response
+            fetch(`http://127.0.0.1:5000/youtube/playlist?playlistID=${playlistID}&filter=${false}&credentials=${this.state.youtubeCredentials}`).then((response) => {
+                let youtubeTrackList = response.data.tracks
+                for (let i = 0; i < youtubeTrackList.length; i++) {
+                    // TODO: Handle response
+                    console.log(i)
+                }
             })
         }
     }
 
     getYoutubeAccessToken() {
-        axios.get("http://127.0.0.1:5000/youtube/playlist/PLQAo3WtfNEjVPqQXmCFpt3gyLb9abaq_2/false").then((response) => {
+        fetch(`http://127.0.0.1:5000/youtube/playlist/PLQAo3WtfNEjVPqQXmCFpt3gyLb9abaq_2/false`).then((response) => {
             let authURL = response.request.responseText
             // window.open(authURL)
-            console.log(this.state)
+            // console.log(this.state)
             localStorage.setItem("state", this.state)
-            console.log(localStorage.getItem("state"))
+            // console.log(localStorage.getItem("state"))
             window.location.replace(authURL)
-            console.log(authURL)
+            // console.log(authURL)
         })
     }
 
@@ -174,8 +177,8 @@ class App extends React.Component {
             return track.uri
         })
 
-        let tracks = await axios.get("https://spotitubev2.herokuapp.com/spotify/search", {
-        })
+        // let tracks = await axios.get("https://spotitubev2.herokuapp.com/spotify/search", {
+        // })
     }
 
     render() {
@@ -188,7 +191,7 @@ class App extends React.Component {
                         onSearch={this.search}
                     />
                     <YoutubeButton
-                        onSearch={this.findYoutubePlaylist}
+                        onFindYoutube={this.findYoutubePlaylist}
                     ></YoutubeButton>
                     <div className='Tracks'>
                         <SearchResults
