@@ -56,7 +56,8 @@ def getYoutubeAuthUrl():
 @app.route('/youtube/token')
 def getYoutubeAccessToken():
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri="http://localhost:3000")
+        CLIENT_SECRETS_FILE, scopes=SCOPES, state=flask.request.args.get("authState"))
+    flow.redirect_uri = "http://localhost:3000"
     # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     flow.fetch_token(code=flask.request.args.get("authCode"))
     credentials = flow.credentials
@@ -65,7 +66,7 @@ def getYoutubeAccessToken():
     return flask.redirect(flask.url_for('playlist'))
 
 
-    
+
 @app.route('/youtube/playlist')
 def playlist(playlistID, filter):
     if 'credentials' not in flask.session:

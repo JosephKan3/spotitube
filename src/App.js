@@ -57,8 +57,11 @@ class App extends React.Component {
             if (this.state.youtubeRedirect) {
                 console.log("HELLOOOOO")
                 let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
+                let authUrl = JSON.parse(localStorage.getItem("authUrl"))
+                console.log(authUrl)
                 console.log(authCode)
-                axios.get("http://127.0.0.1:5000/youtube/token", {params: {authCode:authCode}}).then((response) => {
+
+                axios.get("http://127.0.0.1:5000/youtube/token", {params: {authCode:authCode, authState:authUrl}}).then((response) => {
                     this.setState({
                         youtubeAccessToken: response.request.responseText,
                         youtubeRedirect: false
@@ -147,6 +150,7 @@ class App extends React.Component {
                 localStorage.setItem("state", JSON.stringify(this.state))
                 axios.get("http://127.0.0.1:5000/youtube/getAuthUrl").then((response) => {
                     let authURL = response.request.responseText
+                    localStorage.setItem("authUrl", JSON.stringify(authURL))
                     window.location.replace(authURL)
                 })
             })
