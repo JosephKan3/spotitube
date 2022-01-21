@@ -196,7 +196,8 @@ def authorize():
 
   # Store the state so the callback can verify the auth server response.
     flask.session['state'] = state
-
+    print("STATE ONE")
+    print(state)
     return flask.redirect(authorization_url)
 
 
@@ -205,11 +206,14 @@ def oauth2callback():
   # Specify the state when creating the flow in the callback so that it can
   # verified in the authorization server response.
     state = flask.session['state']
+    print("STATE TWO")
+    print(state)
+    print(flask.request.url)
 
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
     flow.redirect_uri = flask.url_for('oauth2callback', _external=True)
-
+    print(flow.redirect_uri)
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     authorization_response = flask.request.url
     flow.fetch_token(authorization_response=authorization_response)
@@ -220,7 +224,7 @@ def oauth2callback():
     credentials = flow.credentials
     flask.session['credentials'] = credentials_to_dict(credentials)
 
-    return flask.redirect(flask.url_for('playlist'))
+    return flask.redirect(flask.url_for('test_api_request'))
 
 
 @app.route('/youtube/revoke')
