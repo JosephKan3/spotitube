@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from email.utils import decode_params
 import os
 import flask
 import requests
 import time
 import json
+import urllib.parse
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -54,14 +56,11 @@ def getYoutubeAuthUrl():
       # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
     flask.session['state'] = state
-    print(authorization_url)
     return (authorization_url)
 
 
 @app.route('/youtube/token')
 def getYoutubeAccessToken():
-
-    print(flask.request)
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES, state=flask.request.args.get("authState"))
     flow.redirect_uri = REDIRECT_URI
@@ -70,7 +69,6 @@ def getYoutubeAccessToken():
     credentials = flow.credentials
     flask.session['credentials'] = credentials_to_dict(credentials)
     return credentials_to_dict(credentials)
-
 
 
 @app.route('/youtube/playlist')
@@ -88,7 +86,6 @@ def playlist():
         playlistId=flask.request.args.get("playlistID"),
         maxResults=5
     ).execute()
-
 
     # Filtering Non-music videos (CategoryId = 10)
     musicTitlesPlaylist = []
@@ -113,7 +110,6 @@ def credentials_to_dict(credentials):
 def getFullCredentials(partialCredentials):
     f = open(CLIENT_SECRETS_FILE, "r")
     clientSecretData = json.load(f)["web"]
-    print(clientSecretData)
     return {
       'token': partialCredentials["token"],
       'refresh_token': partialCredentials["refresh_token"],
@@ -123,16 +119,26 @@ def getFullCredentials(partialCredentials):
       'scopes': partialCredentials["scopes"]}
 
 
+
 #Spotify Routes
+
+@app.route('/spotify/searchToken')
+def getSpotifySearchToken():
+  auth_response = requests.post('https://accounts.spotify.com/api/token', {
+    'grant_type': 'client_credentials',
+    'client_id': SPOTIFY_CLIENT_ID,
+    'client_secret': SPOTIFY_CLIENT_SECRET,
+  })
+  auth_response_data = auth_response.json()
+  # Save the access token
+  access_token = auth_response_data['access_token']
+  return access_token
+
 
 @app.route('/spotify/search')
 def search():
-  query = flask.request.args.get("query")
-  if 'spotifyToken' not in flask.session:
-    return flask.redirect(flask.url_for('searchAuthorize', query=query), code=307)
-
-  headers = {'Authorization': 'Bearer {token}'.format(token=flask.session['spotifyToken'])}
-  response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=query), headers=headers)
+  headers = {'Authorization': 'Bearer {token}'.format(token=flask.request.args.get("token"))}
+  response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=flask.request.args.get("query")), headers=headers)
   jsonResponse = response.json()
   trackList = []
   for track in jsonResponse["tracks"]["items"]:
@@ -146,39 +152,48 @@ def search():
     })
   return(flask.jsonify(trackList))
 
-@app.route('/spotify/searchAuthorize')
-def searchAuthorize():
-  query = flask.request.args.get("query")
-  auth_response = requests.post('https://accounts.spotify.com/api/token', {
-      'grant_type': 'client_credentials',
-      'client_id': SPOTIFY_CLIENT_ID,
-      'client_secret': SPOTIFY_CLIENT_SECRET,
-  })
-  auth_response_data = auth_response.json()
 
-  # Save the access token
-  access_token = auth_response_data['access_token']
-  flask.session['spotifyToken'] = access_token
-  return flask.redirect(flask.url_for('search', query=query), code=307)
+@app.route('/spotify/getAuthUrl')
+def getSpotifyAuthUrl():
+  sp_oauth = create_spotify_oauth()
+  oauth_url = sp_oauth.get_authorize_url()
+  return oauth_url
+
+@app.route('/spotify/token')
+# def getSpotifyAccessToken():
+  # validToken = False
+  # token_info = flask.session.get("token_info", {})
+
+  # # Checking if session has a token
+  # if not (flask.session.get("token_info", False)):
+  #   token_valud = False
+  #   return token_info, validToken
+
+  # # Checking if token is expired
+  # currentTime = int(time.time())
+  # tokenExpired = flask.session.get("token_info").get("expires_at") - currentTime < 30
+
+  # # Refreshing token if expired
+  # if (tokenExpired):
+  #   sp_oauth = create_spotify_oauth()
+  #   token_info = sp_oauth.refresh_access_token(flask.session.get("token_info").get("refresh_token"))
+
+  # validToken = True
+  # return token_info, validToken
+def getSpotifyAccessToken():
+  sp_oauth = create_spotify_oauth()
+  authCode = flask.request.args.get("authCode")
+  token_info = sp_oauth.get_access_token(authCode)
+  return token_info
 
 
 @app.route('/spotify/savePlaylist', methods=["GET"])
 def savePlaylist():
-  # Getting query arguments if not already stored in session
-  if "playlistName" not in flask.session:
-    flask.session["playlistName"] = flask.request.args.get("playlistName")
-  if "trackURIs" not in flask.session:
-    flask.session["trackURIs"] = flask.request.args.get("trackURIs")
-  playlistName = flask.session["playlistName"]
-  trackURIs = flask.session["trackURIs"]
+  playlistName = flask.request.args.get("playlistName")
+  trackURIs = json.loads(urllib.parse.unquote(flask.request.args.get("playlistTracks")))
+  credentials = json.loads(flask.request.args.get("credentials"))
 
-  # Checking if access token is stored in session
-  flask.session["token_info"], authorized = getSpotAccessToken()
-  flask.session.modified = True
-  if not authorized:
-    return flask.redirect(flask.url_for("spotOAuthLogin"), code=307)
-
-  sp = spotipy.Spotify(auth=flask.session.get("token_info").get("access_token"))
+  sp = spotipy.Spotify(auth=credentials["access_token"])
   # Getting User ID
   userID = sp.me().get("id")
 
@@ -186,62 +201,17 @@ def savePlaylist():
   playlistID = sp.user_playlist_create(userID, playlistName).get("id")
 
   # Filling Playlist
-  filledPlaylist = sp.playlist_add_items(playlistID, flask.request.get_json()["trackURIs"])
-  flask.session.pop("playlistName")
-  flask.session.pop("trackURIs")
+  filledPlaylist = sp.playlist_add_items(playlistID, trackURIs)
   return filledPlaylist
 
-
-@app.route('/spotify/spotOAuthLogin')
-def spotOAuthLogin():
-  sp_oauth = create_spotify_oauth()
-  oauth_url = sp_oauth.get_authorize_url()
-  return flask.redirect(oauth_url)
-
-
-@app.route('/spotify/saveAuthorize')
-def saveAuthorize():
-  sp_oauth = create_spotify_oauth()
-  playlistName = flask.session["playlistName"]
-  trackURIs = flask.session["trackURIs"]
-  flask.session.clear()
-  flask.session["playlistName"] = playlistName 
-  flask.session["trackURIs"] = trackURIs 
-  authCode = flask.request.args.get("code")
-  token_info = sp_oauth.get_access_token(authCode)
-  flask.session["token_info"] = token_info
-  return flask.redirect(flask.url_for("savePlaylist"))
 
 def create_spotify_oauth():
   return SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
-    redirect_uri=flask.url_for("saveAuthorize", _external=True),
+    redirect_uri=REDIRECT_URI,
     scope="playlist-modify-public,playlist-modify-private"
   )
-
-def getSpotAccessToken():
-  validToken = False
-  token_info = flask.session.get("token_info", {})
-
-  # Checking if session has a token
-  if not (flask.session.get("token_info", False)):
-    token_valud = False
-    return token_info, validToken
-
-  # Checking if token is expired
-  currentTime = int(time.time())
-  tokenExpired = flask.session.get("token_info").get("expires_at") - currentTime < 30
-
-  # Refreshing token if expired
-  if (tokenExpired):
-    sp_oauth = create_spotify_oauth()
-    token_info = sp_oauth.refresh_access_token(flask.session.get("token_info").get("refresh_token"))
-
-  validToken = True
-  return token_info, validToken
-
-
 
 if __name__ == '__main__':
   # When running locally, disable OAuthlib's HTTPs verification.

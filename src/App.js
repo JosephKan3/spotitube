@@ -37,9 +37,8 @@ class App extends React.Component {
             },
             youtubeCredentials: {},
             youtubeRedirect: false,
-            spotifyToken: {},
+            spotifyCredentials: {},
             spotifyRedirect: false
-
         }
 
         this.handleAdd = this.handleAdd.bind(this)
@@ -51,6 +50,7 @@ class App extends React.Component {
         this.getYoutubeAccessToken = this.getYoutubeAccessToken.bind(this)
         this.getSpotifyAccessToken = this.getSpotifyAccessToken.bind(this)
         this.getYoutubeAuthUrl = this.getYoutubeAuthUrl.bind(this)
+        this.getSpotifyAuthUrl = this.getSpotifyAuthUrl.bind(this)
 
 
         // Fetching local state
@@ -58,24 +58,9 @@ class App extends React.Component {
         if (localState != null) {
             this.state = localState
         }
-        // if (this.state.youtubeRedirect) {
-        //     this.getYoutubeAccessToken()
-        // }
-        // if (this.state.spotifyRedirect) {
-        //     this.getSpotifyAccessToken()
-        // }
     }
 
 
-    async search(query) {
-        console.log(`Searching for: ${query}.`)
-        window.open("https://spotitubev2.herokuapp.com/spotify/search?query=Uptown%20funk")
-        fetch(`https://spotitubev2.herokuapp.com/spotify/search?query=${query}`).then((response) => {
-            window.open(response)
-            console.log(response)
-            this.setState({searchResults: response})
-        })
-    }
 
     
     handleRemoval(track) {
@@ -94,11 +79,11 @@ class App extends React.Component {
             this.setState({playlist: {
                 playlistName: this.state.playlist.playlistName,
                 playlistTracks: tracks
-            }})
+            }}, () => {
+                localStorage.setItem("state", JSON.stringify(this.state))
+            })
             console.log(this.state.searchResults)
-
         }
-        
     }
 
     handleAdd(track) {
@@ -112,7 +97,9 @@ class App extends React.Component {
             this.setState({playlist: {
                 playlistName: this.state.playlist.playlistName,
                 playlistTracks: tracks
-            }})
+            }}, () => {
+                localStorage.setItem("state", JSON.stringify(this.state))
+            })
         }
     }
 
@@ -123,34 +110,13 @@ class App extends React.Component {
         }})
     }
 
-
-
-    getSpotifyAccessToken() {
-        if (this.state.spotifyRedirect) {
-            let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-            axios.get("http://127.0.0.1:5000/youtube/token", {params: {
-                authCode:authCode,
-            }}).then(response => {
-                console.log(response)
-                this.setState({
-                    spotifyToken: response.request.responseText,
-                    spotifyRedirect: false
-                }, () => {
-                    localStorage.setItem("state", JSON.stringify(this.state))
-                })
-            })
-        }
-    }
-
     getYoutubeAuthUrl() {
         this.setState({youtubeRedirect: true}, () => {
             localStorage.setItem("state", JSON.stringify(this.state))
-            fetch(`http://127.0.0.1:5000/youtube/getAuthUrl`).then(response => {
-                return response.text()
-            }).then(responseText => {
-                window.location.replace(responseText)
+            axios.get("http://127.0.0.1:5000/youtube/getAuthUrl").then(response => {
+                let authUrl = response.data
+                window.location.replace(authUrl)
             })
-
         })
     }
 
@@ -195,13 +161,10 @@ class App extends React.Component {
             axios.get("http://127.0.0.1:5000/youtube/playlist", {params: {
                 playlistID:playlistID,
                 filter: false,
-                credentials:this.state.youtubeCredentials
+                credentials: this.state.youtubeCredentials
             }}).then(response => {
                 let youtubeTrackList = response.data
-                for (let i = 0; i < youtubeTrackList.length; i++) {
-                    // TODO: Handle response with Spotify
-                    console.log(youtubeTrackList[i])
-                }
+                this.bulkSearch(youtubeTrackList)
             })
         // Begin auth code flow
         } else {
@@ -209,15 +172,103 @@ class App extends React.Component {
         }
     }
 
+    async bulkSearch(trackNames) {
+        console.log(trackNames)
+        let searchPromises = []
+        axios.get("http://127.0.0.1:5000/spotify/searchToken").then(response => {
+            for (let i = 0; i < trackNames.length; i++) {
+                searchPromises.push(
+                    axios.get("http://127.0.0.1:5000/spotify/search", {params: {
+                        query: trackNames[i],
+                        token: response.data
+                    }})
+                )
+            }
+            Promise.all(searchPromises).then((responses) => {
+                let ytPlaylist = responses.map((response) => {
+                    // Selecting best recommendation from Spotify
+                    return response.data[0]
+                })
+                let filtedYtPlaylist = ytPlaylist.filter((track) => {
+                    return track !== undefined
+                })
+                console.log(filtedYtPlaylist)
+                this.setState({
+                    playlist: {
+                        playlistName: this.state.playlistName,
+                        playlistTracks: filtedYtPlaylist
+                    }}, () => {
+                    localStorage.setItem("state", JSON.stringify(this.state))
+                })
+            })
+        })
+    }
 
+    // Spotify Search does not require OAuth
+    search(query) {
+        console.log(`Searching for: ${query}.`)
+        axios.get("http://127.0.0.1:5000/spotify/searchToken").then(response => {
+            axios.get("http://127.0.0.1:5000/spotify/search", {params: {
+                query: query,
+                token: response.data
+            }}).then((response) => {
+                this.setState({searchResults: response.data}, () => {
+                    localStorage.setItem("state", JSON.stringify(this.state))
+                })
+            })
+        })
+    }
+
+    // Spotify Save requires OAuth
+    getSpotifyAuthUrl() {
+        this.setState({spotifyRedirect: true}, () => {
+            axios.get("http://127.0.0.1:5000/spotify/getAuthUrl").then(response => {
+                localStorage.setItem("state", JSON.stringify(this.state))
+                let authUrl = response.data
+                window.location.replace(authUrl)
+            })
+        })
+    }
+
+    getSpotifyAccessToken(authCode) {
+        if (this.state.spotifyRedirect) {
+            axios.get("http://127.0.0.1:5000/spotify/token", {params: {
+                authCode:authCode,
+            }}).then(response => {
+                this.setState({
+                    spotifyCredentials: response.data,
+                    spotifyRedirect: false
+                }, () => {
+                    localStorage.setItem("state", JSON.stringify(this.state))
+                })
+            })
+        }
+    }
 
     async savePlaylist() {
-        let trackUris = this.state.playlist.playlistTracks.map(track => {
+        // If credentials are stored
+        let hasCreds = this.state.spotifyCredentials.access_token !== undefined
+        if (!hasCreds) {
+            console.log("No creds")
+            // If auth code not found in URL
+            if (window.location.href.match(/code=([^&]*)/) === null) {
+                this.getSpotifyAuthUrl()
+            // If auth code found
+            } else {
+                console.log("getting code")
+                let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
+                this.getSpotifyAccessToken(authCode)
+            }
+        }
+        // Execute save request
+        let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
             return track.uri
         })
-
-        // let tracks = await axios.get("https://spotitubev2.herokuapp.com/spotify/search", {
-        // })
+        axios.get("http://127.0.0.1:5000/spotify/savePlaylist", {params: {
+            playlistName: this.state.playlist.playlistName,
+            playlistTracks: encodeURIComponent(JSON.stringify(playlistTrackUris)),
+            credentials: this.state.spotifyCredentials
+        }})
     }
 
     render() {
