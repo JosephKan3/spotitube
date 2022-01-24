@@ -6,6 +6,10 @@
     justify-content: center;
 }
 
+.SearchInput {
+    width: 20vh;
+}
+
 .SearchButton {
     display: flex;
     background-color: #003F00;

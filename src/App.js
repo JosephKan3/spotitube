@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import axios from 'axios'
 import './App.css';
 import React from 'react';
@@ -11,28 +10,10 @@ import YoutubeButton from './components/YoutubeButton';
 class App extends React.Component {
     constructor(props) {
         super(props)
-
-        this.sampleTracks = [
-            {
-                name: "Gangnam Style",
-                artist: "Psy",
-                album: "Culture", 
-                key: "45675468576324542",
-                image: "https://i.scdn.co/image/ab67616d0000b2736cfc57e5358c5e39e79bccbd"
-            }, {
-                name: "Dynamite",
-                artist: "Captain Sparklez",
-                album: "Minecrack", 
-                key: "4327533534931",
-                image: "https://i.scdn.co/image/ab67616d0000b2736cfc57e5358c5e39e79bccbd"
-            }
-        ]
-
-
         this.state = {
-            searchResults: this.sampleTracks,
+            searchResults: [],
             playlist: {
-                playlistName: "Playlist Name",
+                playlistName: "Enter Playlist Name Here",
                 playlistTracks: []
             },
             youtubeCredentials: {},
@@ -60,9 +41,6 @@ class App extends React.Component {
         }
     }
 
-
-
-    
     handleRemoval(track) {
         let tracks = this.state.playlist.playlistTracks
         let trackPosition = -1
@@ -290,6 +268,7 @@ class App extends React.Component {
                             onAdd={this.handleAdd}
                         />
                         <Playlist
+                            name={this.state.playlist.playlistName}
                             onNameChange={this.updatePlaylistName}
                             tracks={this.state.playlist.playlistTracks}
                             isRemoval={true}

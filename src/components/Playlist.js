@@ -22,7 +22,7 @@ class Playlist extends React.Component {
             <div className='Playlist'>
                 <input
                     className="PlaylistName"
-                    defaultValue={"Enter Playlist Name Here"}
+                    defaultValue={this.props.name}
                     onChange={this.handleNameChange}
                 />
                 <button

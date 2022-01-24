@@ -32,8 +32,7 @@ class YoutubeButton extends React.Component {
                 />
                 <button
                     onClick={this.handleSearchPlaylist}
-                >Import Youtube Preferences</button>
-                <button>Import Youtube Playlist</button>
+                >Import Youtube Playlist</button>
             </div>
         )
     }
