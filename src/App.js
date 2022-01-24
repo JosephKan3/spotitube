@@ -228,8 +228,8 @@ class App extends React.Component {
         let hasCreds = this.state.spotifyCredentials.access_token !== undefined
         if (!hasCreds) {
             console.log("No creds")
-            // If auth code not found in URL
-            if (window.location.href.match(/code=([^&]*)/) === null) {
+            // If not redirected
+            if (!this.state.spotifyRedirect) {
                 this.getSpotifyAuthUrl()
             // If auth code found
             } else {
