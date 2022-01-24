@@ -25,7 +25,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
 #Youtube OAuth Client
-REDIRECT_URI="http://localhost:3000/"
+REDIRECT_URI=os.environ.get("REDIRECT_URI")
 CLIENT_SECRETS_FILE = "./clientSecret.json"
 SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
@@ -160,26 +160,6 @@ def getSpotifyAuthUrl():
   return oauth_url
 
 @app.route('/spotify/token')
-# def getSpotifyAccessToken():
-  # validToken = False
-  # token_info = flask.session.get("token_info", {})
-
-  # # Checking if session has a token
-  # if not (flask.session.get("token_info", False)):
-  #   token_valud = False
-  #   return token_info, validToken
-
-  # # Checking if token is expired
-  # currentTime = int(time.time())
-  # tokenExpired = flask.session.get("token_info").get("expires_at") - currentTime < 30
-
-  # # Refreshing token if expired
-  # if (tokenExpired):
-  #   sp_oauth = create_spotify_oauth()
-  #   token_info = sp_oauth.refresh_access_token(flask.session.get("token_info").get("refresh_token"))
-
-  # validToken = True
-  # return token_info, validToken
 def getSpotifyAccessToken():
   sp_oauth = create_spotify_oauth()
   authCode = flask.request.args.get("authCode")
