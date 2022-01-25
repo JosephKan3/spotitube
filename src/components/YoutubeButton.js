@@ -4,20 +4,17 @@ import "./YoutubeButton.css"
 class YoutubeButton extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            playlistID: ""
-        }
 
         this.handleSearchPlaylist = this.handleSearchPlaylist.bind(this)
         this.handlePlaylistChange = this.handlePlaylistChange.bind(this)
     }
 
     handleSearchPlaylist(event) {
-        this.props.onFindYoutube(this.state.playlistID)
+        this.props.onFindYoutube(this.props.playlistID)
     }
 
     handlePlaylistChange(event) {
-        this.setState({playlistID: event.target.value})
+        this.props.onUpdate(event.target.value)
     }
 
     render() {
@@ -28,7 +25,8 @@ class YoutubeButton extends React.Component {
                 >Sign in to Youtube</button>
                 <input
                     className='PlaylistInput'
-                    placeholder="Enter Youtube Playlist ID"
+                    value={this.props.playlistID}
+                    placeholder="Enter Youtube Playlist ID or URL"
                     onChange={this.handlePlaylistChange}
                 />
                 <button

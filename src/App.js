@@ -19,7 +19,9 @@ class App extends React.Component {
             youtubeCredentials: {},
             youtubeRedirect: false,
             spotifyCredentials: {},
-            spotifyRedirect: false
+            spotifyRedirect: false,
+            playlistID: "",
+            searchQuery: ""
         }
 
         this.handleAdd = this.handleAdd.bind(this)
@@ -32,7 +34,8 @@ class App extends React.Component {
         this.getSpotifyAccessToken = this.getSpotifyAccessToken.bind(this)
         this.getYoutubeAuthUrl = this.getYoutubeAuthUrl.bind(this)
         this.getSpotifyAuthUrl = this.getSpotifyAuthUrl.bind(this)
-
+        this.updatePlaylistID = this.updatePlaylistID.bind(this)
+        this.updateSearchQuery = this.updateSearchQuery.bind(this)
 
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
@@ -81,6 +84,14 @@ class App extends React.Component {
         }
     }
 
+    updatePlaylistID(playlistID) {
+        this.setState({playlistID: playlistID})
+    }
+
+    updateSearchQuery(query) {
+        this.setState({searchQuery: query})
+    }
+
     updatePlaylistName(name) {
         this.setState({playlist: {
             playlistName: name,
@@ -124,7 +135,7 @@ class App extends React.Component {
         })
     }
 
-    async findYoutubePlaylist(playlistID) {
+    async findYoutubePlaylist(playlistInput) {
         // If authenticated
         let hasCreds = this.state.youtubeCredentials.token !== undefined
         let tokenFound = false
@@ -134,6 +145,14 @@ class App extends React.Component {
                 tokenFound = false
             })
         }
+
+        let playlistID = playlistInput
+        // Parse Playlist ID
+        if (playlistInput.match(/list=([^&])*/)) {
+            playlistID = playlistInput.match(/list=([^&])*/)[0].slice(5)
+            console.log(playlistID)
+        }
+
         // If either credentials or auth code are found, send request
         if (tokenFound || hasCreds) {
             axios.get("https://spotitubev2.herokuapp.com/youtube/playlist", {params: {
@@ -276,10 +295,14 @@ class App extends React.Component {
                     <NavigationBar></NavigationBar>
                     <SearchBar
                         onSearch={this.search}
+                        onUpdate={this.updateSearchQuery}
+                        searchQuery={this.state.searchQuery}
                     />
                     <YoutubeButton
                         onFindYoutube={this.findYoutubePlaylist}
                         onSign={this.getYoutubeAuthUrl}
+                        onUpdate={this.updatePlaylistID}
+                        playlistID={this.state.playlistID}
                     ></YoutubeButton>
                     <div className='Tracks'>
                         <SearchResults

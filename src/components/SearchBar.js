@@ -12,32 +12,26 @@ class SearchBar extends React.Component {
     }
 
     handleQueryChange(event) {
-        this.setState(
-            {
-                query: event.target.value
-            }
-        )
+        this.props.onUpdate(event.target.value)
     }
     
-    search(event) {
-        this.props.onSearch(this.state.query)
+    search() {
+        this.props.onSearch(this.props.searchQuery)
     }
-
-
 
     render() {
         return(
             <div className='SearchBar'>
                 <input
-                className="SearchInput"
-                placeholder="Enter a Song, Album, or Artist"
-                onChange={this.handleQueryChange}
+                    className="SearchInput"
+                    value={this.props.searchQuery}
+                    placeholder="Enter a Song, Album, or Artist"
+                    onChange={this.handleQueryChange}
                 />
                 <button 
-                className="SearchButton"
-                onClick={this.search}
+                    className="SearchButton"
+                    onClick={this.search}
                 >Search</button>
-
             </div>
         )
     }
