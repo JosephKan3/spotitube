@@ -209,22 +209,28 @@ class App extends React.Component {
     }
 
     getSpotifyAccessToken(authCode) {
-        if (this.state.spotifyRedirect) {
-            axios.get("https://spotitubev2.herokuapp.com/spotify/token", {params: {
-                authCode:authCode,
-            }}).then(response => {
-                this.setState({
-                    spotifyCredentials: response.data,
-                    spotifyRedirect: false
-                }, () => {
-                    localStorage.setItem("state", JSON.stringify(this.state))
+        return new Promise((resolve, reject) => {
+            if (this.state.spotifyRedirect) {
+                axios.get("https://spotitubev2.herokuapp.com/spotify/token", {params: {
+                    authCode:authCode,
+                }}).then(response => {
+                    this.setState({
+                        spotifyCredentials: response.data,
+                        spotifyRedirect: false
+                    }, () => {
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                        resolve()
+                    })
+                }).catch((error) => {
+                    reject(error)
                 })
-            })
-        }
+            }
+        })
+
     }
 
     async savePlaylist() {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             // If credentials are stored
             let hasCreds = this.state.spotifyCredentials.access_token !== undefined
             if (!hasCreds) {
@@ -237,7 +243,7 @@ class App extends React.Component {
                 } else {
                     console.log("getting code")
                     let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                    this.getSpotifyAccessToken(authCode)
+                    await this.getSpotifyAccessToken(authCode)
                 }
             }
             // Execute save request

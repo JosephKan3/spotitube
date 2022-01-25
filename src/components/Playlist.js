@@ -38,6 +38,7 @@ class Playlist extends React.Component {
 
     async handleSave(event) {
         // Handle button render
+        // TODO: Error message not being returned
         let saved = await this.props.onSave()
         this.setState({saveConfirmation: saved})
     }

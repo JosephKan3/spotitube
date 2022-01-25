@@ -26,6 +26,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # information for this application, including its client_id and client_secret.
 #Youtube OAuth Client
 REDIRECT_URI=os.environ.get("REDIRECT_URI")
+PLAYLIST_MAX_RESULTS=os.environ.get("MAX_PLAYLIST_RESULTS")
 CLIENT_SECRETS_FILE = "./clientSecret.json"
 SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
@@ -84,7 +85,7 @@ def playlist():
     playlist = youtube.playlistItems().list(
         part="contentDetails",
         playlistId=flask.request.args.get("playlistID"),
-        maxResults=5
+        maxResults=min(50, int(PLAYLIST_MAX_RESULTS))
     ).execute()
 
     # Filtering Non-music videos (CategoryId = 10)
@@ -94,9 +95,12 @@ def playlist():
             part="snippet",
             id=video["contentDetails"]["videoId"]
         ).execute()
-        isMusic = videoDetails["items"][0]["snippet"]["categoryId"]=="10"
-        if (isMusic or flask.request.args.get("filter") == "false"):
+        try:
+          isMusic = videoDetails["items"][0]["snippet"]["categoryId"]=="10"
+          if (isMusic or flask.request.args.get("filter") == "false"):
             musicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
+        except IndexError as e:
+          continue
     flask.session['credentials'] = credentials_to_dict(credentials)
 
     return flask.jsonify(musicTitlesPlaylist)
@@ -172,6 +176,7 @@ def savePlaylist():
   playlistName = flask.request.args.get("playlistName")
   trackURIs = json.loads(urllib.parse.unquote(flask.request.args.get("playlistTracks")))
   credentials = json.loads(flask.request.args.get("credentials"))
+  print(credentials)
 
   # Check if refresh needed
   if (credentials["expires_at"] - int(time.time()) < 60):
