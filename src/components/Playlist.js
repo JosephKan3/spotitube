@@ -6,7 +6,7 @@ class Playlist extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            saveConfirmation: "saved"
+            saveConfirmation: "none"
         }
         this.handleNameChange = this.handleNameChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
