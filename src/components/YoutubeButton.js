@@ -27,6 +27,7 @@ class YoutubeButton extends React.Component {
                     onClick={this.props.onSign}
                 >Sign in to Youtube</button>
                 <input
+                    className='PlaylistInput'
                     placeholder="Enter Youtube Playlist ID"
                     onChange={this.handlePlaylistChange}
                 />

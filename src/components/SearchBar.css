@@ -7,19 +7,23 @@
 }
 
 .SearchInput {
-    width: 20vh;
+    height: 30px;
+    width: 40vh;
 }
 
 .SearchButton {
     display: flex;
     background-color: #003F00;
     color: white;
+    height: 36px;
+    line-height: 36px;
+    width: 120px;
     font-weight: 500;
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     border: 0px;
-    /* width: 220px; */
     align-self: center;
+    align-content: center;
     justify-content: center;
     cursor: pointer;
 }

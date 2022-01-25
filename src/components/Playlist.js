@@ -5,6 +5,9 @@ import TrackList from "./TrackList"
 class Playlist extends React.Component {
     constructor(props) {
         super(props)
+        this.state = {
+            saveConfirmation: "none"
+        }
         this.handleNameChange = this.handleNameChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
     }
@@ -13,8 +16,30 @@ class Playlist extends React.Component {
         this.props.onNameChange(event.target.value)
     }
 
-    handleSave(event) {
-        this.props.onSave()
+    saveConfirmation() {
+        if (this.state.saveConfirmation === "none") {
+            return 
+        } else if (this.state.saveConfirmation === "saved") {
+            return (
+                <div className='SaveConfirmation'>
+                    <h3>Saved!</h3>
+                </div>
+            )
+        } else if (this.state.saveConfirmation === "error") {
+            return (
+                <div className='SaveConfirmation'>
+                    <h3>Error.</h3>
+                </div>
+            )
+        } else {
+            return
+        }
+    }
+
+    async handleSave(event) {
+        // Handle button render
+        let saved = await this.props.onSave()
+        this.setState({saveConfirmation: saved})
     }
 
     render() {
@@ -25,10 +50,14 @@ class Playlist extends React.Component {
                     defaultValue={this.props.name}
                     onChange={this.handleNameChange}
                 />
-                <button
-                    className='PlaylistSave'
-                    onClick={this.handleSave}
-                >Save Playlist to Spotify</button>
+                <div className='SaveButtons'>
+                    <button
+                        className='PlaylistSave'
+                        onClick={this.handleSave}
+                    >Save Playlist to Spotify</button>
+                    {this.saveConfirmation()}
+                </div>
+
                 <TrackList
                     tracks={this.props.tracks}
                     isRemoval={true}

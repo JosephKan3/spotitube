@@ -224,29 +224,43 @@ class App extends React.Component {
     }
 
     async savePlaylist() {
-        // If credentials are stored
-        let hasCreds = this.state.spotifyCredentials.access_token !== undefined
-        if (!hasCreds) {
-            console.log("No creds")
-            // If not redirected
-            if (!this.state.spotifyRedirect) {
-                this.getSpotifyAuthUrl()
-            // If auth code found
-            } else {
-                console.log("getting code")
-                let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
-                this.getSpotifyAccessToken(authCode)
+        return new Promise((resolve, reject) => {
+            // If credentials are stored
+            let hasCreds = this.state.spotifyCredentials.access_token !== undefined
+            if (!hasCreds) {
+                console.log("No creds")
+                // If not redirected
+                if (!this.state.spotifyRedirect) {
+                    this.getSpotifyAuthUrl()
+                    reject("authenticating")
+                // If auth code found
+                } else {
+                    console.log("getting code")
+                    let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
+                    this.getSpotifyAccessToken(authCode)
+                }
             }
-        }
-        // Execute save request
-        let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
-            return track.uri
-        })
-        axios.get("https://spotitubev2.herokuapp.com/spotify/savePlaylist", {params: {
-            playlistName: this.state.playlist.playlistName,
-            playlistTracks: encodeURIComponent(JSON.stringify(playlistTrackUris)),
-            credentials: this.state.spotifyCredentials
-        }})
+            // Execute save request
+            let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
+                return track.uri
+            })
+            axios.get("https://spotitubev2.herokuapp.com/spotify/savePlaylist", {params: {
+                playlistName: this.state.playlist.playlistName,
+                playlistTracks: encodeURIComponent(JSON.stringify(playlistTrackUris)),
+                credentials: this.state.spotifyCredentials
+            }}).then(response => {
+                // If no error in status, render saved notification
+                if (response.status < 400) {
+                    // Update credentials in case of refresh access token
+                    this.setState({spotifyCredentials: response.data})
+                    resolve("saved")
+                // If error in status, render error notification
+                } else {
+                    resolve("error")
+                }
+            })            
+        }) 
+
     }
 
     render() {

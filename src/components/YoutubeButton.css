@@ -14,12 +14,19 @@
     font-weight: 500;
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    height: 36px;
     border: 0px;
     width: 240px;
     cursor: pointer;
 }
 
-.YoutubeButton button:hover {
+.PlaylistInput {
+    height: 30px;
+    margin: 10px;
+    width: 220px;
+}
+
+.Youtube button:hover {
     background-color: black;
 
 }

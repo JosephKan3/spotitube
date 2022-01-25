@@ -173,6 +173,11 @@ def savePlaylist():
   trackURIs = json.loads(urllib.parse.unquote(flask.request.args.get("playlistTracks")))
   credentials = json.loads(flask.request.args.get("credentials"))
 
+  # Check if refresh needed
+  if (credentials["expires_at"] - int(time.time()) < 60):
+    sp_oauth = create_spotify_oauth()
+    credentials = sp_oauth.refresh_access_token(credentials["refresh_token"])
+
   sp = spotipy.Spotify(auth=credentials["access_token"])
   # Getting User ID
   userID = sp.me().get("id")
@@ -181,9 +186,8 @@ def savePlaylist():
   playlistID = sp.user_playlist_create(userID, playlistName).get("id")
 
   # Filling Playlist
-  filledPlaylist = sp.playlist_add_items(playlistID, trackURIs)
-  return filledPlaylist
-
+  sp.playlist_add_items(playlistID, trackURIs)
+  return credentials
 
 def create_spotify_oauth():
   return SpotifyOAuth(

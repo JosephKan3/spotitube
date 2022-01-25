@@ -8,8 +8,14 @@
     background-color: rgb(30,215,96);
 }
 
-.PlaylistSave {
+.SaveButtons {
     display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+}
+
+.PlaylistSave {
+    display: inline-flex;
     background-color: #003F00;
     color: white;
     font-weight: 500;
@@ -18,9 +24,31 @@
     border: 0px;
     margin: 20px 40px 0px 40px;
     width: 220px;
+    height: 36px;
+    line-height: 36px;
     align-self: center;
     justify-content: center;
     cursor: pointer;
+}
+
+.SaveConfirmation {
+    display: inline-flex;
+    background-color: #003F00;
+    color: white;
+    font-weight: 500;
+    font-size: 18px;
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    border: 0px;
+    margin: 20px 40px 0px 40px;
+    height: 36px;
+    width: 120px;
+    align-self: center;
+    justify-content: center;
+}
+
+.SaveConfirmation h3 {
+    display: flex;
+    margin: 0px;
 }
 
 .PlaylistSave:hover {
