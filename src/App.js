@@ -234,14 +234,14 @@ class App extends React.Component {
             // If credentials are stored
             let hasCreds = this.state.spotifyCredentials.access_token !== undefined
             if (!hasCreds) {
-                console.log("No creds")
                 // If not redirected
                 if (!this.state.spotifyRedirect) {
+                    console.log("ONE")
                     this.getSpotifyAuthUrl()
                     reject("authenticating")
                 // If auth code found
                 } else {
-                    console.log("getting code")
+                    console.log("TWO")
                     let authCode = decodeURIComponent(window.location.href.match(/code=([^&]*)/)[1])
                     await this.getSpotifyAccessToken(authCode)
                 }
@@ -250,6 +250,7 @@ class App extends React.Component {
             let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
                 return track.uri
             })
+            console.log("THREE")
             axios.get("https://spotitubev2.herokuapp.com/spotify/savePlaylist", {params: {
                 playlistName: this.state.playlist.playlistName,
                 playlistTracks: encodeURIComponent(JSON.stringify(playlistTrackUris)),
