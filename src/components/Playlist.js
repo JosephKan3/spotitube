@@ -60,6 +60,10 @@ class Playlist extends React.Component {
                         className='PlaylistSave'
                         onClick={this.handleSave}
                     >Save Playlist to Spotify</button>
+                    <button
+                        className='PlaylistSave'
+                        onClick={this.props.onClear}
+                    >Clear Playlist</button>
                 </div>
                 {this.saveConfirmation()}
                 <TrackList

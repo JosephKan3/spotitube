@@ -36,6 +36,7 @@ class App extends React.Component {
         this.getSpotifyAuthUrl = this.getSpotifyAuthUrl.bind(this)
         this.updatePlaylistID = this.updatePlaylistID.bind(this)
         this.updateSearchQuery = this.updateSearchQuery.bind(this)
+        this.clearPlaylist = this.clearPlaylist.bind(this)
 
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
@@ -97,6 +98,15 @@ class App extends React.Component {
             playlistName: name,
             playlistTracks: this.state.playlist.playlistTracks
         }})
+    }
+
+    clearPlaylist() {
+        this.setState({
+            playlist: {
+                playlistName: "Enter Playlist Name Here",
+                playlistTracks: []
+            }
+        })
     }
 
     getYoutubeAuthUrl() {
@@ -318,6 +328,7 @@ class App extends React.Component {
                             onRemoval={this.handleRemoval}
                             onLogin={this.getSpotifyAuthUrl}
                             onSave={this.savePlaylist}
+                            onClear={this.clearPlaylist}
                         />
                     </div>
                 </div>
