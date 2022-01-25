@@ -6,7 +6,7 @@ class Playlist extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            saveConfirmation: "none"
+            saveConfirmation: "saved"
         }
         this.handleNameChange = this.handleNameChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
@@ -54,11 +54,14 @@ class Playlist extends React.Component {
                 <div className='SaveButtons'>
                     <button
                         className='PlaylistSave'
+                        onClick={this.props.onLogin}
+                    >Log in to Spotify</button>
+                    <button
+                        className='PlaylistSave'
                         onClick={this.handleSave}
                     >Save Playlist to Spotify</button>
-                    {this.saveConfirmation()}
                 </div>
-
+                {this.saveConfirmation()}
                 <TrackList
                     tracks={this.props.tracks}
                     isRemoval={true}

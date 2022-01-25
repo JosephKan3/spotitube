@@ -294,6 +294,7 @@ class App extends React.Component {
                             tracks={this.state.playlist.playlistTracks}
                             isRemoval={true}
                             onRemoval={this.handleRemoval}
+                            onLogin={this.getSpotifyAuthUrl}
                             onSave={this.savePlaylist}
                         />
                     </div>

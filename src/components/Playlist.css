@@ -10,7 +10,7 @@
 
 .SaveButtons {
     display: flex;
-    flex-flow: column nowrap;
+    flex-flow: row nowrap;
     justify-content: center;
 }
 
@@ -22,7 +22,7 @@
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     border: 0px;
-    margin: 20px 40px 0px 40px;
+    margin: 10px 20px 0px 20px;
     width: 220px;
     height: 36px;
     line-height: 36px;
@@ -39,9 +39,9 @@
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     border: 0px;
-    margin: 20px 40px 0px 40px;
+    margin: 10px 40px 0px 40px;
     height: 36px;
-    width: 120px;
+    width: 30%;
     align-self: center;
     justify-content: center;
 }
