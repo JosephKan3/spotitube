@@ -15,6 +15,12 @@
     }
 }
 
+@media screen and (max-width: 2000px) {
+    .Playlist {
+        margin: 0px 10px;
+    }
+}
+
 .SaveButtons {
     display: flex;
     flex-flow: row wrap;

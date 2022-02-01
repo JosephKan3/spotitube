@@ -37,6 +37,12 @@ body {
     height: 70vh;
 }
 
+@media screen and (max-width: 1000px) {
+    .Tracks {
+        margin: 0px 10px;
+    }
+}
+
 .APIButton {
     position: relative;
     display: inline-flex;

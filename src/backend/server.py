@@ -56,7 +56,6 @@ def getYoutubeAuthUrl():
         access_type='offline',
       # Enable incremental authorization. Recommended as a best practice.
         include_granted_scopes='true')
-    flask.session['state'] = state
     return (authorization_url)
 
 
@@ -68,7 +67,6 @@ def getYoutubeAccessToken():
     # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     flow.fetch_token(code=flask.request.args.get("authCode"))
     credentials = flow.credentials
-    flask.session['credentials'] = credentials_to_dict(credentials)
     return credentials_to_dict(credentials)
 
 
@@ -81,29 +79,42 @@ def playlist():
 
     youtube = googleapiclient.discovery.build(
         API_SERVICE_NAME, API_VERSION, credentials=credentials)
-    # Requesting Video IDs from Playlist
-    playlist = youtube.playlistItems().list(
-        part="contentDetails",
-        playlistId=flask.request.args.get("playlistID"),
-        maxResults=min(50, int(PLAYLIST_MAX_RESULTS))
-    ).execute()
+    
+    fullMusicTitlesPlaylist = []
+    nextPage = True
+    nextPageToken = ""
+    # Continues sending requests until the playlist runs out of additional pages
+    while (nextPage):
+      # Requesting Video IDs from Playlist
+      playlist = youtube.playlistItems().list(
+          part="contentDetails",
+          playlistId=flask.request.args.get("playlistID"),
+          maxResults=min(50, int(PLAYLIST_MAX_RESULTS)),
+          pageToken=nextPageToken
+      ).execute()
+        
+      
+      # Filtering Non-music videos (CategoryId = 10)
+      for video in playlist["items"]:
+          videoDetails = youtube.videos().list(
+              part="snippet",
+              id=video["contentDetails"]["videoId"]
+          ).execute()
+          try:
+            fullMusicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
+          except IndexError as e:
+            continue
+      # Continues looping through all pages of the playlist
+      if ("nextPageToken" not in playlist):
+        nextPage = False
+      else:
+        nextPageToken = playlist["nextPageToken"]
+        print(playlist["nextPageToken"])
+            
+      
+    print(fullMusicTitlesPlaylist)
 
-    # Filtering Non-music videos (CategoryId = 10)
-    musicTitlesPlaylist = []
-    for video in playlist["items"]:
-        videoDetails = youtube.videos().list(
-            part="snippet",
-            id=video["contentDetails"]["videoId"]
-        ).execute()
-        try:
-          isMusic = videoDetails["items"][0]["snippet"]["categoryId"]=="10"
-          if (isMusic or flask.request.args.get("filter") == "false"):
-            musicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
-        except IndexError as e:
-          continue
-    flask.session['credentials'] = credentials_to_dict(credentials)
-
-    return flask.jsonify(musicTitlesPlaylist)
+    return flask.jsonify(fullMusicTitlesPlaylist)
 
 def credentials_to_dict(credentials):
     return {'token': credentials.token,
@@ -209,4 +220,4 @@ if __name__ == '__main__':
     # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     # app.run('localhost', 8080, debug=True)
     port = int(os.environ.get('PORT'))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
