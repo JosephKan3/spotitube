@@ -6,11 +6,18 @@
     justify-content: flex-start;
     margin: 0px 40px;
     background-color: rgb(30,215,96);
+    padding-bottom: 20px;
+}
+
+@media screen and (max-width: 3000px) {
+    .Playlist {
+        width: 45%;
+    }
 }
 
 .SaveButtons {
     display: flex;
-    flex-flow: row nowrap;
+    flex-flow: row wrap;
     justify-content: center;
     padding-left: 40px;
     padding-right: 40px;
@@ -27,7 +34,7 @@
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     border: 0px;
     margin: 10px 10px 0px 10px;
-    width: 220px;
+    flex: 1 0 120px;
     height: 36px;
     line-height: 36px;
     align-self: center;

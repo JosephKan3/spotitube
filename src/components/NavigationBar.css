@@ -2,7 +2,6 @@
     color: red;
 }
 
-
 .Navigation {
     text-align: center;
     background-color: #282c34;
@@ -32,7 +31,7 @@
 .NavLinks {
     margin-left: auto;
     padding: 0px 20px;
-    flex-flow: row nowrap;    
+    flex-flow: row nowrap;
     align-content: center;
 }
 

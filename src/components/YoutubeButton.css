@@ -2,12 +2,14 @@
     position: relative;
     top: 120px;
     display: flex;
-    flex-flow: row nowrap;
+    flex-flow: row wrap;
     justify-content: center;
 
 }
 
 .Youtube button {
+    flex: 1 0 200px;
+    max-width: 280px;
     border-radius: 20px;
     margin: 10px 10px;
     background-color: #FF0000;
@@ -24,7 +26,9 @@
 .PlaylistInput {
     height: 30px;
     margin: 10px;
-    width: 220px;
+    width: 24vw;
+    flex: 1 0 300px;
+    max-width: 500px;
 }
 
 .Youtube button:hover {

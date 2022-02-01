@@ -8,7 +8,8 @@
 
 .SearchInput {
     height: 30px;
-    width: 40vh;
+    flex: 1 0 250px;
+    max-width: 400px;
 }
 
 .SearchButton {
@@ -18,7 +19,7 @@
     color: white;
     height: 36px;
     line-height: 36px;
-    width: 120px;
+    width: 140px;
     font-weight: 500;
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -27,6 +28,7 @@
     align-content: center;
     justify-content: center;
     cursor: pointer;
+    margin: 0px 10px;
 }
 
 .SearchButton:hover {

@@ -55,11 +55,11 @@ class Playlist extends React.Component {
                     <button
                         className='PlaylistSave'
                         onClick={this.props.onLogin}
-                    >Log in to Spotify</button>
+                    >Spotify Login</button>
                     <button
                         className='PlaylistSave'
                         onClick={this.handleSave}
-                    >Save Playlist to Spotify</button>
+                    >Save to Spotify</button>
                     <button
                         className='PlaylistSave'
                         onClick={this.props.onClear}

@@ -296,7 +296,7 @@ class App extends React.Component {
             // Execute save request
             let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
                 if (track.notFound) {
-                    return
+                    return undefined
                 } else {
                     return track.uri
                 }
