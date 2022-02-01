@@ -33,6 +33,7 @@
     padding: 0px 20px;
     flex-flow: row nowrap;
     align-content: center;
+    overflow: auto;
 }
 
 .NavItem {
