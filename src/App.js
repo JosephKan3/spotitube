@@ -295,12 +295,19 @@ class App extends React.Component {
             }
             // Execute save request
             let playlistTrackUris = this.state.playlist.playlistTracks.map(track => {
-                return track.uri
+                if (track.notFound) {
+                    return
+                } else {
+                    return track.uri
+                }
             })
-            console.log("THREE")
+            let filteredTrackUris = playlistTrackUris.filter(track => {
+                return track !== undefined
+            })
+            console.log(filteredTrackUris)
             axios.get("http://127.0.0.1:5000/spotify/savePlaylist", {params: {
                 playlistName: this.state.playlist.playlistName,
-                playlistTracks: encodeURIComponent(JSON.stringify(playlistTrackUris)),
+                playlistTracks: encodeURIComponent(JSON.stringify(filteredTrackUris)),
                 credentials: this.state.spotifyCredentials
             }}).then(response => {
                 // If no error in status, render saved notification
