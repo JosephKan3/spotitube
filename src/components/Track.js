@@ -6,6 +6,7 @@ class Track extends React.Component {
         super(props)
         this.addTrack = this.addTrack.bind(this)
         this.removeTrack = this.removeTrack.bind(this)
+        this.renderTrack = this.renderTrack.bind(this)
     }
     renderAction() {
         if (this.props.isRemoval) {
@@ -27,23 +28,41 @@ class Track extends React.Component {
         this.props.onRemoval(this.props.track)
     }
 
-
-    render() {
-        return(
-            <div className="Track">
-                <div className='TrackInformation'>
+    renderTrack() {
+        // Rendering track that was not found by youtube import
+        if (this.props.track.notFound) {
+            return (
+                <div className="Error">
                     <div className='TrackName'>
-                        <img 
-                            className="TrackImage" 
-                            src={this.props.track.image} 
-                            alt={this.props.track.name}></img>
-                        <h3>{this.props.track.name}</h3>
+                        <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
                         {this.renderAction()}
                     </div>
-                    <p>{this.props.track.artist} | {this.props.track.album}</p>
-                </div>
-            </div>
-        )
+                </div>           
+            )
+        // Rendering track that was found
+        } else {
+            return (
+                <div className="Track">
+                    <div className='TrackInformation'>
+                        <div className='TrackName'>
+                            <img 
+                                className="TrackImage"
+                                src={this.props.track.image} 
+                                alt={this.props.track.name}></img>
+                            <h3>{this.props.track.name}</h3>
+                            {this.renderAction()}
+                        </div>
+                        <p>{this.props.track.artist} | {this.props.track.album}</p>
+                    </div>
+                </div>                
+            )
+        }
+
+    }
+
+
+    render() {
+        return(this.renderTrack())
     }
 }
 

@@ -12,6 +12,7 @@
 }
 
 .SearchButton {
+    border-radius: 20px;
     display: flex;
     background-color: #003F00;
     color: white;

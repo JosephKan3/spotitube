@@ -14,9 +14,11 @@
     justify-content: center;
     padding-left: 40px;
     padding-right: 40px;
+    margin-bottom: 10px;
 }
 
 .PlaylistSave {
+    border-radius: 20px;
     display: inline-flex;
     background-color: #003F00;
     color: white;
@@ -34,6 +36,7 @@
 }
 
 .SaveConfirmation {
+    border-radius: 20px;
     display: inline-flex;
     background-color: #003F00;
     color: white;
@@ -74,4 +77,3 @@
 input:focus-visible {
     outline: 0px;
 }
-
