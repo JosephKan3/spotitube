@@ -44,9 +44,9 @@
     font-size: 18px;
     font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     border: 0px;
-    margin: 10px 40px 0px 40px;
+    margin: 10px 40px 10px 40px;
     height: 36px;
-    width: 30%;
+    width: 240px;
     align-self: center;
     justify-content: center;
 }
