@@ -215,10 +215,34 @@ class App extends React.Component {
                         ytPlaylist.push({
                             notFound: true,
                             trackName: trackNames[i],
-                            key: uuidv4()
+                            key: uuidv4(),
+                            duplicate: false
                         })
                     } else {
-                        ytPlaylist.push(recommendation)
+                        // Filters out duplicate search results -- likely indicates an inaccurate search O(n^2), TODO?
+                        let duplicate = false
+                        let duplicateName = ""
+                        for (let j = 0; j < ytPlaylist.length; j++) {
+                            if (recommendation.key === ytPlaylist[j].key) {
+                                duplicate = true
+                                duplicateName = trackNames[j]
+                                break
+                            }
+                        }
+                        // Returns a duplicate song object
+                        if (duplicate) {
+                            ytPlaylist.push({
+                                notFound: true,
+                                trackName: trackNames[i],
+                                key: uuidv4(),
+                                duplicate: true,
+                                duplicateName: duplicateName,
+                                recommendationName: recommendation.name
+                            })
+                            continue
+                        } else {
+                            ytPlaylist.push(recommendation)
+                        }
                     }
                 }
                 console.log(ytPlaylist)

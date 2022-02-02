@@ -31,14 +31,28 @@ class Track extends React.Component {
     renderTrack() {
         // Rendering track that was not found by youtube import
         if (this.props.track.notFound) {
-            return (
-                <div className="Error">
-                    <div className='TrackName'>
-                        <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
-                        {this.renderAction()}
-                    </div>
-                </div>           
-            )
+            // Duplicate search result from Spotify
+            if (this.props.track.duplicate) {
+                return (
+                    <div className="Error">
+                        <div className='TrackName'>
+                            <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> resulted in a duplicate song match from Spotify. Manually resolve the conflict with <span className='ErrorTrackTitle'>{this.props.track.duplicateName}</span> or only <span className='ErrorTrackTitle'>{this.props.track.recommendationName}</span> will be saved.</h5>
+                            {this.renderAction()}
+                        </div>
+                    </div>           
+                )
+            // No search results from Spotify
+            } else {
+                return (
+                    <div className="Error">
+                        <div className='TrackName'>
+                            <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
+                            {this.renderAction()}
+                        </div>
+                    </div>           
+                )
+            }
+
         // Rendering track that was found
         } else {
             return (
