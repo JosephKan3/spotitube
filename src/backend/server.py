@@ -109,11 +109,7 @@ def playlist():
         nextPage = False
       else:
         nextPageToken = playlist["nextPageToken"]
-        print(playlist["nextPageToken"])
             
-      
-    print(fullMusicTitlesPlaylist)
-
     return flask.jsonify(fullMusicTitlesPlaylist)
 
 def credentials_to_dict(credentials):
