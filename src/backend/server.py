@@ -148,15 +148,18 @@ def search():
   response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=flask.request.args.get("query")), headers=headers)
   jsonResponse = response.json()
   trackList = []
-  for track in jsonResponse["tracks"]["items"]:
-    trackList.append({
-      "name": track["name"],
-      "artist": track["artists"][0]["name"],
-      "album": track["album"]["name"],
-      "key": track["id"],
-      "uri": track["uri"],
-      "image": track["album"]["images"][0]["url"]
-    })
+  try:
+    for track in jsonResponse["tracks"]["items"]:
+      trackList.append({
+        "name": track["name"],
+        "artist": track["artists"][0]["name"],
+        "album": track["album"]["name"],
+        "key": track["id"],
+        "uri": track["uri"],
+        "image": track["album"]["images"][0]["url"]
+      })
+  except KeyError as e:
+    trackList.append({})
   return(flask.jsonify(trackList))
 
 
@@ -187,15 +190,22 @@ def savePlaylist():
     credentials = sp_oauth.refresh_access_token(credentials["refresh_token"])
 
   sp = spotipy.Spotify(auth=credentials["access_token"])
-  # Getting User ID
-  userID = sp.me().get("id")
+  
+  # Saves to given playlist instead of creating a new playlist
+  existingID = flask.request.args.get("playlistID")
+  if (existingID):
+    sp.playlist_add_items(existingID, trackURIs)
+    return {"playlistID": existingID, "credentials": credentials}
+  else:
+    # Getting User ID
+    userID = sp.me().get("id")
 
-  # Creating Playlist
-  playlistID = sp.user_playlist_create(userID, playlistName).get("id")
+    # Creating Playlist
+    playlistID = sp.user_playlist_create(userID, playlistName).get("id")
 
-  # Filling Playlist
-  sp.playlist_add_items(playlistID, trackURIs)
-  return credentials
+    # Filling Playlist
+    sp.playlist_add_items(playlistID, trackURIs)
+    return {"playlistID": playlistID, "credentials": credentials}
 
 def create_spotify_oauth():
   return SpotifyOAuth(
