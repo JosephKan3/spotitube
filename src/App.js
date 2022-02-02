@@ -192,12 +192,16 @@ class App extends React.Component {
     }
 
     async bulkSearch(trackNames) {
+        // Filters out (Official Video) and [Official Video] tags that break the Spotify search query
+        let cleanTrackNames = trackNames.map((trackName) => {
+            return trackName.split("(")[0].split("[")[0]
+        })
         let searchPromises = []
         axios.get("http://127.0.0.1:5000/spotify/searchToken").then(response => {
             for (let i = 0; i < trackNames.length; i++) {
                 searchPromises.push(
                     axios.get("http://127.0.0.1:5000/spotify/search", {params: {
-                        query: trackNames[i],
+                        query: cleanTrackNames[i],
                         token: response.data
                     }})
                 )
