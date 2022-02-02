@@ -87,23 +87,19 @@ def playlist():
     while (nextPage):
       # Requesting Video IDs from Playlist
       playlist = youtube.playlistItems().list(
-          part="contentDetails",
+          part="snippet",
           playlistId=flask.request.args.get("playlistID"),
           maxResults=min(50, int(PLAYLIST_MAX_RESULTS)),
           pageToken=nextPageToken
       ).execute()
-        
-      
-      # Filtering Non-music videos (CategoryId = 10)
+  
+      #Adding video title to response object
       for video in playlist["items"]:
-          videoDetails = youtube.videos().list(
-              part="snippet",
-              id=video["contentDetails"]["videoId"]
-          ).execute()
-          try:
-            fullMusicTitlesPlaylist.append(videoDetails["items"][0]["snippet"]["title"])
-          except IndexError as e:
-            continue
+        try:
+          fullMusicTitlesPlaylist.append(video["snippet"]["title"])
+        except IndexError as e:
+          continue
+
       # Continues looping through all pages of the playlist
       if ("nextPageToken" not in playlist):
         nextPage = False

@@ -118,6 +118,8 @@ class App extends React.Component {
                 playlistName: "Enter Playlist Name Here",
                 playlistTracks: []
             }
+        }, () => {
+            localStorage.setItem("state", JSON.stringify(this.state))
         })
     }
 
@@ -248,7 +250,7 @@ class App extends React.Component {
                 console.log(ytPlaylist)
                 this.setState({
                     playlist: {
-                        playlistName: this.state.playlistName,
+                        playlistName: this.state.playlist.playlistName,
                         playlistTracks: ytPlaylist
                     }}, () => {
                     localStorage.setItem("state", JSON.stringify(this.state))
