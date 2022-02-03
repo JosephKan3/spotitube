@@ -2,6 +2,11 @@ import "./NavArrow.css"
 import React from "react"
 
 class NavArrow extends React.Component {
+    constructor(props) {
+        super(props)
+
+        this.renderArrow = this.renderArrow.bind(this)
+    }
     renderArrow() {
         if (this.props.arrow === "up") {
             return <h6>&uarr;</h6>
@@ -12,7 +17,9 @@ class NavArrow extends React.Component {
 
     render() {
         return (
-            this.renderArrow
+            <div>
+                {this.renderArrow()}
+            </div>
         )
     }
 }
