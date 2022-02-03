@@ -147,12 +147,13 @@ def getSpotifySearchToken():
 
 
 @app.route('/spotify/search')
-@backoff.on_exception(backoff.expo, TooManyRequests)
 def search():
   headers = {'Authorization': 'Bearer {token}'.format(token=flask.request.args.get("token"))}
   jsonResponse = sendSearch(flask.request.args.get("query"), headers)
-  if ("error" in jsonResponse and jsonResponse["error"]["status"] == 429):
-    raise TooManyRequests("Spotify Rate Limit Reached!")
+  # After running the give up code after 60 seconds of waiting, the song search will be abandonned
+  if ("tracks" not in jsonResponse):
+    return(flask.jsonify({"error": "Error, too many requests at one time, gave up after 60 seconds. Wait a moment before sending more requests."}))
+  # Parsing valid Spotify responses
   else:
     trackList = []
     for track in jsonResponse["tracks"]["items"]:
@@ -164,11 +165,10 @@ def search():
         "uri": track["uri"],
         "image": track["album"]["images"][0]["url"]
       })
-
     return(flask.jsonify(trackList))
 
 
-@backoff.on_exception(backoff.expo, TooManyRequests)
+@backoff.on_exception(backoff.expo, TooManyRequests, max_time = 60)
 def sendSearch(query, headers):
   response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=query), headers=headers)
   jsonResponse = response.json()
@@ -177,6 +177,9 @@ def sendSearch(query, headers):
     raise TooManyRequests("Spotify Rate Limit Reached!")
   else:
     return jsonResponse
+
+def giveUpCode(e):
+  return {}
 
 
 @app.route('/spotify/getAuthUrl')
