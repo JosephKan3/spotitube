@@ -11,3 +11,4 @@ requests==2.27.1
 requests-oauthlib==1.1.0
 spotipy==2.19.0
 Werkzeug==2.0.2
+backoff==1.11.1

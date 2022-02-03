@@ -7,6 +7,7 @@ import requests
 import time
 import json
 import urllib.parse
+import backoff
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -35,6 +36,9 @@ API_VERSION = 'v3'
 #Spotify OAuth Client
 SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
+
+class TooManyRequests(Exception):
+  pass
 
 
 #Youtube Routes
@@ -128,7 +132,6 @@ def getFullCredentials(partialCredentials):
 
 
 #Spotify Routes
-
 @app.route('/spotify/searchToken')
 def getSpotifySearchToken():
   auth_response = requests.post('https://accounts.spotify.com/api/token', {
@@ -142,13 +145,16 @@ def getSpotifySearchToken():
   return access_token
 
 
+
 @app.route('/spotify/search')
+@backoff.on_exception(backoff.expo, TooManyRequests)
 def search():
   headers = {'Authorization': 'Bearer {token}'.format(token=flask.request.args.get("token"))}
-  response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=flask.request.args.get("query")), headers=headers)
-  jsonResponse = response.json()
-  trackList = []
-  try:
+  jsonResponse = sendSearch(flask.request.args.get("query"), headers)
+  if ("error" in jsonResponse and jsonResponse["error"]["status"] == 429):
+    raise TooManyRequests("Spotify Rate Limit Reached!")
+  else:
+    trackList = []
     for track in jsonResponse["tracks"]["items"]:
       trackList.append({
         "name": track["name"],
@@ -158,9 +164,19 @@ def search():
         "uri": track["uri"],
         "image": track["album"]["images"][0]["url"]
       })
-  except KeyError as e:
-    trackList.append({})
-  return(flask.jsonify(trackList))
+
+    return(flask.jsonify(trackList))
+
+
+@backoff.on_exception(backoff.expo, TooManyRequests)
+def sendSearch(query, headers):
+  response = requests.get("https://api.spotify.com/v1/search?type=track&q=${query}".format(query=query), headers=headers)
+  jsonResponse = response.json()
+  if ("error" in jsonResponse and jsonResponse["error"]["status"] == 429):
+    print("Error, too many requests at {}, retrying...".format(time.time()))
+    raise TooManyRequests("Spotify Rate Limit Reached!")
+  else:
+    return jsonResponse
 
 
 @app.route('/spotify/getAuthUrl')
