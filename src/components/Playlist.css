@@ -48,27 +48,6 @@
     cursor: pointer;
 }
 
-.SaveConfirmation {
-    border-radius: 20px;
-    display: inline-flex;
-    background-color: #003F00;
-    color: white;
-    font-weight: 500;
-    font-size: 18px;
-    font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    border: 0px;
-    margin: 10px 40px 10px 40px;
-    height: 36px;
-    width: 240px;
-    align-self: center;
-    justify-content: center;
-}
-
-.SaveConfirmation h3 {
-    display: flex;
-    margin: 0px;
-}
-
 .PlaylistSave:hover {
     background-color: black;
 }
@@ -89,4 +68,8 @@
 
 input:focus-visible {
     outline: 0px;
+}
+
+.PlaylistSave:disabled {
+    background-color: rgb(100, 100, 100);
 }

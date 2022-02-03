@@ -5,9 +5,6 @@ import TrackList from "./TrackList"
 class Playlist extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {
-            saveConfirmation: "none"
-        }
         this.handleNameChange = this.handleNameChange.bind(this)
         this.handleSave = this.handleSave.bind(this)
     }
@@ -16,31 +13,11 @@ class Playlist extends React.Component {
         this.props.onNameChange(event.target.value)
     }
 
-    saveConfirmation() {
-        if (this.state.saveConfirmation === "none") {
-            return 
-        } else if (this.state.saveConfirmation === "saved") {
-            return (
-                <div className='SaveConfirmation'>
-                    <h3>Saved!</h3>
-                </div>
-            )
-        } else if (this.state.saveConfirmation === "error") {
-            return (
-                <div className='SaveConfirmation'>
-                    <h3>Error.</h3>
-                </div>
-            )
-        } else {
-            return
-        }
-    }
-
     async handleSave(event) {
         // Handle button render
-        // TODO: Error message not being returned
-        let saved = await this.props.onSave()
-        this.setState({saveConfirmation: saved})
+        event.target.disabled = true
+        event.target.innerText = "Saving..."
+        this.props.onSave(event)
     }
 
     render() {
@@ -65,7 +42,6 @@ class Playlist extends React.Component {
                         onClick={this.props.onClear}
                     >Clear Playlist</button>
                 </div>
-                {this.saveConfirmation()}
                 <TrackList
                     tracks={this.props.tracks}
                     isRemoval={true}

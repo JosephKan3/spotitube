@@ -1,0 +1,43 @@
+.Youtube {
+    position: relative;
+    top: 120px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+
+}
+
+.Youtube button {
+    border-radius: 20px;
+    margin: 10px 10px;
+    background-color: #FF0000;
+    color: white;
+    font-weight: 500;
+    font-size: 18px;
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    height: 36px;
+    border: 0px;
+    width: 240px;
+    cursor: pointer;
+}
+
+.PlaylistInput {
+    height: 30px;
+    margin: 10px;
+    width: 24vw;
+    font-family: inherit;
+    width: 100%;
+    border: 0;
+    border-bottom: 2px solid $gray;
+    outline: 0;
+    font-size: 1.3rem;
+    color: $white;
+    padding: 7px 0;
+    background: transparent;
+    transition: border-color 0.2s;
+}
+
+.Youtube button:hover {
+    background-color: black;
+
+}
