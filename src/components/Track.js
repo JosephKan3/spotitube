@@ -1,5 +1,6 @@
 import React from 'react';
 import './Track.css';
+import NavArrow from './NavArrow';
 
 class Track extends React.Component {
     constructor(props) {
@@ -35,9 +36,13 @@ class Track extends React.Component {
             if (this.props.track.duplicate) {
                 return (
                     <div className="Error">
-                        <div className='TrackName'>
-                            <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> resulted in a duplicate song match from Spotify. Manually resolve the conflict with <span className='ErrorTrackTitle'>{this.props.track.duplicateName}</span> or only <span className='ErrorTrackTitle'>{this.props.track.recommendationName}</span> will be saved.</h5>
-                            {this.renderAction()}
+                        <div className="Navigate">
+                            <NavArrow arrow="up" onClick={this.props.navigateUp}/>
+                            <div className='TrackName'>
+                                <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> resulted in a duplicate song match from Spotify. Manually resolve the conflict with <span className='ErrorTrackTitle'>{this.props.track.duplicateName}</span> or only <span className='ErrorTrackTitle'>{this.props.track.recommendationName}</span> will be saved.</h5>
+                                {this.renderAction()}
+                            </div>
+                            <NavArrow arrow="down" onClick={this.props.navigateDown}/>
                         </div>
                     </div>           
                 )
@@ -45,12 +50,14 @@ class Track extends React.Component {
             } else {
                 return (
                     <div className="Error">
-                        {/* <h7>&uarr;</h7> */}
-                        <div className='TrackName'>
-                            <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
-                            {this.renderAction()}
+                        <div className="Navigate">
+                            <NavArrow arrow="up" onClick={this.props.navigateUp}/>
+                            <div className='TrackName'>
+                                <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
+                                {this.renderAction()}
+                            </div>
+                            <NavArrow arrow="down" onClick={this.props.navigateDown}/>
                         </div>
-                        {/* <h7>&darr;</h7> */}
                     </div>           
                 )
             }
