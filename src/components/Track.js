@@ -45,10 +45,12 @@ class Track extends React.Component {
             } else {
                 return (
                     <div className="Error">
+                        {/* <h7>&uarr;</h7> */}
                         <div className='TrackName'>
                             <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
                             {this.renderAction()}
                         </div>
+                        {/* <h7>&darr;</h7> */}
                     </div>           
                 )
             }

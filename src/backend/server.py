@@ -155,6 +155,12 @@ def search():
     return(flask.jsonify({"error": "Error, too many requests at one time, gave up after 60 seconds. Wait a moment before sending more requests."}))
   # Parsing valid Spotify responses
   else:
+    # If response is empty, resend request after filtering out () and [] tags from search query
+    if (len(jsonResponse["tracks"]["items"])) == 0:
+      cleanQuery = flask.request.args.get("query").split("(")[0].split("[")[0]
+      jsonResponse = sendSearch(cleanQuery, headers)
+    
+    # Parse response
     trackList = []
     for track in jsonResponse["tracks"]["items"]:
       trackList.append({
@@ -178,7 +184,7 @@ def sendSearch(query, headers):
   else:
     return jsonResponse
 
-def giveUpCode(e):
+def giveUpCode():
   return {}
 
 
@@ -201,7 +207,6 @@ def savePlaylist():
   playlistName = flask.request.args.get("playlistName")
   trackURIs = json.loads(urllib.parse.unquote(flask.request.args.get("playlistTracks")))
   credentials = json.loads(flask.request.args.get("credentials"))
-  print(credentials)
 
   # Check if refresh needed
   if (credentials["expires_at"] - int(time.time()) < 60):
