@@ -5,6 +5,11 @@ class YoutubeButton extends React.Component {
     constructor(props) {
         super(props)
 
+        this.state = {
+            totalSearchPromises: 0,
+            totalSearchPromisesResolved: 0
+        }
+
         this.handleSearchPlaylist = this.handleSearchPlaylist.bind(this)
         this.handlePlaylistChange = this.handlePlaylistChange.bind(this)
     }
@@ -12,8 +17,8 @@ class YoutubeButton extends React.Component {
     async handleSearchPlaylist(event) {
         // Disabling button to prevent repeat requests
         event.target.disabled = true
-        event.target.innerText = "Searching, please wait..."
-        this.props.onFindYoutube(this.props.playlistID, event)
+        event.target.innerText = "Searching, please wait... 0%"
+        this.props.onFindYoutube(this.props.playlistID, event, this)
     }
 
     handlePlaylistChange(event) {
