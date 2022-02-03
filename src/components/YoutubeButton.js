@@ -18,7 +18,11 @@ class YoutubeButton extends React.Component {
         // Disabling button to prevent repeat requests
         event.target.disabled = true
         event.target.innerText = "Searching, please wait... 0%"
-        this.props.onFindYoutube(this.props.playlistID, event, this)
+        await this.props.onFindYoutube(this.props.playlistID, event, this)
+        this.setState({
+            totalSearchPromises: 0,
+            totalSearchPromisesResolved: 0  
+        })
     }
 
     handlePlaylistChange(event) {
