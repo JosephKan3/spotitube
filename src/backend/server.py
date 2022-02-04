@@ -59,7 +59,8 @@ def getYoutubeAuthUrl():
       # Enable offline access so that you can refresh an access token without re-prompting the user for permission
         access_type='offline',
       # Enable incremental authorization. Recommended as a best practice.
-        include_granted_scopes='true')
+        include_granted_scopes='true',
+        prompt="consent")
     return (authorization_url)
 
 
@@ -77,7 +78,7 @@ def getYoutubeAccessToken():
 @app.route('/youtube/playlist')
 def playlist():
     fullCred = getFullCredentials(json.loads(flask.request.args.get("credentials")))
-  # Load credentials from the session.
+  # Load credentials.
     credentials = google.oauth2.credentials.Credentials(
         **fullCred)
 

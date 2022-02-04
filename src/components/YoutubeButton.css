@@ -39,4 +39,5 @@
 
 .Youtube button:disabled {
     background-color: rgb(100, 100, 100);
+    cursor: wait;
 }
