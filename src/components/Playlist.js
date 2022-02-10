@@ -46,6 +46,8 @@ class Playlist extends React.Component {
                     tracks={this.props.tracks}
                     isRemoval={true}
                     onRemoval={this.props.onRemoval}
+                    navigateDown={this.props.navigateDown}
+                    navigateUp={this.props.navigateUp}
                 />
             </div>
 

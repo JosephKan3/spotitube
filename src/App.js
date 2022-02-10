@@ -17,6 +17,7 @@ class App extends React.Component {
                 playlistName: "Enter Playlist Name Here",
                 playlistTracks: []
             },
+            activeTrack: {},
             youtubeCredentials: {},
             youtubeRedirect: false,
             spotifyCredentials: {},
@@ -38,6 +39,9 @@ class App extends React.Component {
         this.updatePlaylistID = this.updatePlaylistID.bind(this)
         this.updateSearchQuery = this.updateSearchQuery.bind(this)
         this.clearPlaylist = this.clearPlaylist.bind(this)
+        this.setActiveTrack = this.setActiveTrack.bind(this)
+        this.navigateDown = this.navigateDown.bind(this)
+        this.navigateUp = this.navigateUp.bind(this)
 
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
@@ -94,6 +98,43 @@ class App extends React.Component {
             }}, () => {
                 localStorage.setItem("state", JSON.stringify(this.state))
             })
+        }
+    }
+
+    setActiveTrack(track) {
+        console.log(track)
+        this.setState({activeTrack: track}, () => {
+            document.getElementById(track.key).scrollIntoView(true)
+        })
+    }
+
+    navigateUp(event, track) {
+        console.log("CLICK!!")
+        // Get index of the current active track (-1 if not found)
+        let currentIndex = this.state.playlist.playlistTracks.map((track) => {return track.key}).indexOf(track.key)
+        if (currentIndex === -1) {
+            currentIndex = 0
+        }
+        console.log(currentIndex)
+
+        for (let i = currentIndex - 1; i >= 0; i--) {
+            if (this.state.playlist.playlistTracks[i].notFound) {
+                this.setActiveTrack(this.state.playlist.playlistTracks[i])
+            }
+        }
+    }
+
+    navigateDown(event, track) {
+        console.log("CLICK!!")
+        // Get index of the current active track (-1 if not found)
+        let currentIndex = this.state.playlist.playlistTracks.map((track) => {return track.key}).indexOf(track.key)
+        if (currentIndex === -1) {
+            currentIndex = 0
+        }
+        for (let i = currentIndex + 1; i < this.state.playlist.playlistTracks.length; i++) {
+            if (this.state.playlist.playlistTracks[i].notFound) {
+                this.setActiveTrack(this.state.playlist.playlistTracks[i])
+            }
         }
     }
 
@@ -431,6 +472,8 @@ class App extends React.Component {
                             onLogin={this.getSpotifyAuthUrl}
                             onSave={this.savePlaylist}
                             onClear={this.clearPlaylist}
+                            navigateDown={this.navigateDown}
+                            navigateUp={this.navigateUp}
                         />
                     </div>
                 </div>
