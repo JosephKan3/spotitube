@@ -67,7 +67,8 @@ class App extends React.Component {
         })
     }
 
-    handleRemoval(track) {
+    async handleRemoval(track) {
+        // TODO: Needs to change active track
         let tracks = this.state.playlist.playlistTracks
         let trackPosition = -1
         // Removing error tracks
@@ -91,6 +92,30 @@ class App extends React.Component {
             return
         // Removing track from tracklist
         } else {
+            console.log(tracks[trackPosition + 1])
+
+            // Moving active track
+            await new Promise((resolve, reject) => {
+                if (trackPosition + 1 < tracks.length) {
+                    this.setState({activeTrack: tracks[trackPosition + 1]}, () => {
+                        console.log(tracks[trackPosition + 1])
+                        document.getElementById(tracks[trackPosition + 1].key).setAttribute("style", "border: thin solid yellow")
+                        resolve()
+                    })
+                } else if (trackPosition - 1 >= 0) {
+                    this.setState({activeTrack: tracks[trackPosition - 1]}, () => {
+                        document.getElementById(tracks[trackPosition - 1].key).setAttribute("style", "border: thin solid yellow")
+                        resolve()
+                    })
+                } else {
+                    console.log("Empty")
+                    this.setState({activeTrack: {}}, () => {
+                        resolve()
+                    })
+                }
+            })
+
+
             tracks.splice(trackPosition, 1)
             this.setState({playlist: {
                 playlistName: this.state.playlist.playlistName,
@@ -119,18 +144,26 @@ class App extends React.Component {
     }
 
     setActiveTrack(event) {
-        console.log(event)
         let tracks = this.state.playlist.playlistTracks
         // Clearing active track
         for (let i = 0; i < tracks.length; i ++) {
-            document.getElementById(tracks[i].key).setAttribute("style", "border: none")
+            document.getElementById(tracks[i].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
         }
         
+        // Avoids triggering when an inner button is pressed
+        if (event.target.className === "TrackAction") {
+            return
+        }
+
         // Finding new track index
         let targetTrackIndex = tracks.map((track) => {return track.key}).indexOf(event.target.id)
         // If id not found, check parent element
         if (targetTrackIndex === -1) {
             targetTrackIndex = tracks.map((track) => {return track.key}).indexOf(event.target.parentNode.id)
+        }
+
+        if (targetTrackIndex === -1) {
+          return  
         }
 
         // Setting the active track to the target index
@@ -155,7 +188,7 @@ class App extends React.Component {
         // Sets active track to next track
         } else {
             // Changes the active track CSS highlight
-            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none")
+            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
             document.getElementById(tracks[currentIndex + 1].key).setAttribute("style", "border: thin solid yellow")
             this.setState({
                 activeTrack: tracks[currentIndex + 1]
@@ -169,13 +202,14 @@ class App extends React.Component {
     navigateUp() {
         let tracks = this.state.playlist.playlistTracks
         let currentIndex = tracks.map((track) => {return track.key}).indexOf(this.state.activeTrack.key)
+        console.log(tracks)
         // Does nothing if at end of list
         if (currentIndex === 0) {
             return
         // Sets active track to previous track
         } else {
             // Changes the active track CSS highlight
-            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none")
+            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
             document.getElementById(tracks[currentIndex - 1].key).setAttribute("style", "border: thin solid yellow")
             this.setState({
                 activeTrack: tracks[currentIndex - 1]
