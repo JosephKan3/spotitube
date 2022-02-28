@@ -8,8 +8,6 @@ import SearchBar from './components/SearchBar';
 import Playlist from './components/Playlist';
 import YoutubeButton from './components/YoutubeButton';
 
-
-
 class App extends React.Component {
     constructor(props) {
         super(props)
@@ -68,7 +66,6 @@ class App extends React.Component {
     }
 
     async handleRemoval(track) {
-        // TODO: Needs to change active track
         let tracks = this.state.playlist.playlistTracks
         let trackPosition = -1
         // Removing error tracks
@@ -128,17 +125,72 @@ class App extends React.Component {
 
     handleAdd(track) {
         let tracks = this.state.playlist.playlistTracks
+        // Avoids duplicate tracks
         if (tracks.find(searchTrack => {
             return track.key === searchTrack.key
         })) {
             return
+        // Adds track
         } else {
-            tracks.push(track)
-            this.setState({playlist: {
-                playlistName: this.state.playlist.playlistName,
-                playlistTracks: tracks
-            }}, () => {
-                localStorage.setItem("state", JSON.stringify(this.state))
+            // Deletes added track from search results
+            let searchIndex = this.state.searchResults.map(searchTrack => {return searchTrack.key}).indexOf(track.key)
+            let newSearchResults = this.state.searchResults
+            newSearchResults.splice(searchIndex, 1)
+            this.setState({searchResults: newSearchResults}, () => {
+                // Adds track at end if no active track for whatever reason
+                if (!this.state.activeTrack.hasOwnProperty("key")) {
+                    console.log("Huh?")
+                    tracks.push(track)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                // Replaces error tracks
+                } else if (this.state.activeTrack.notFound) {
+                    let activeTrack = this.state.activeTrack
+                    console.log("Not found")
+                    let activeIndex = this.state.playlist.playlistTracks.map((playlistTrack) => {return playlistTrack.key}).indexOf(activeTrack.key)
+                    tracks[activeIndex] = track
+                    console.log(activeIndex)
+                    console.log(tracks)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                // Places below current track if current track is valid
+                } else {
+                    let activeTrack = this.state.activeTrack
+                    console.log("Valid track")
+                    let activeIndex = this.state.playlist.playlistTracks.map((playlistTrack) => {return playlistTrack.key}).indexOf(activeTrack.key)
+                    tracks.splice(activeIndex + 1, 0, track)
+                    console.log(activeIndex)
+                    console.log(tracks)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(activeTrack.key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        document.getElementById(track.key).scrollIntoView(true)
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                } 
+                return                
             })
         }
     }

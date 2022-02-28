@@ -6,7 +6,16 @@
     padding: 0px 20px;
 
   }
-  
+
+.SearchResult {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(256, 256, 256, 0.8);
+    margin: 20px 40px;
+    padding: 0px 20px;
+
+  }
+
 .TrackAction {
   margin-left: auto;
   padding: 0px 20px;

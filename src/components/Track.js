@@ -59,7 +59,23 @@ class Track extends React.Component {
             }
 
         // Rendering track that was found
-        } else {
+        } else if (this.props.searchResult) {
+            return (
+                <div className="SearchResult" id={this.props.track.key} onClick={this.props.onClick}>
+                    <div className='TrackInformation' id={this.props.track.key}>
+                        <div className='TrackName' id={this.props.track.key}>
+                            <img 
+                                className="TrackImage"
+                                src={this.props.track.image} 
+                                alt={this.props.track.name}></img>
+                            <h3>{this.props.track.name}</h3>
+                            {this.renderAction()}
+                        </div>
+                        <p>{this.props.track.artist} | {this.props.track.album}</p>
+                    </div>
+                </div>                
+            )
+        } else { 
             return (
                 <div className="Track" id={this.props.track.key} onClick={this.props.onClick}>
                     <div className='TrackInformation' id={this.props.track.key}>
