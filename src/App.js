@@ -101,40 +101,42 @@ class App extends React.Component {
         }
     }
 
-    setActiveTrack(track) {
-        console.log(track)
-        this.setState({activeTrack: track}, () => {
-            document.getElementById(track.key).scrollIntoView(true)
+    setActiveTrack(event) {
+        console.log(event)
+        let tracks = this.state.playlist.playlistTracks
+        // TODO either keep checking for ID at each element or add ID to each child element
+        let targetTrackIndex = tracks.map((track) => {return track.key}).indexOf(event.target.parentNode.parentNode.parentNode.id)
+        let targetTrack = tracks[targetTrackIndex]
+        console.log(targetTrack)
+        this.setState({activeTrack: targetTrack}, () => {
+            // Fix TODO
+            document.getElementById(targetTrack.key).scrollIntoView(true)
         })
     }
 
-    navigateUp(event, track) {
+    navigateDown() {
         console.log("CLICK!!")
-        // Get index of the current active track (-1 if not found)
-        let currentIndex = this.state.playlist.playlistTracks.map((track) => {return track.key}).indexOf(track.key)
-        if (currentIndex === -1) {
-            currentIndex = 0
-        }
-        console.log(currentIndex)
-
-        for (let i = currentIndex - 1; i >= 0; i--) {
-            if (this.state.playlist.playlistTracks[i].notFound) {
-                this.setActiveTrack(this.state.playlist.playlistTracks[i])
-            }
+        let tracks = this.state.playlist.playlistTracks
+        let currentIndex = tracks.map((track) => {return track.key}).indexOf(this.state.activeTrack.key)
+        // Does nothing if at end of list
+        if (currentIndex + 1 >= tracks.length) {
+            return
+        // Sets active track to next track
+        } else {
+            this.setState({activeTrack: tracks[currentIndex + 1]})
         }
     }
 
-    navigateDown(event, track) {
+    navigateUp() {
         console.log("CLICK!!")
-        // Get index of the current active track (-1 if not found)
-        let currentIndex = this.state.playlist.playlistTracks.map((track) => {return track.key}).indexOf(track.key)
-        if (currentIndex === -1) {
-            currentIndex = 0
-        }
-        for (let i = currentIndex + 1; i < this.state.playlist.playlistTracks.length; i++) {
-            if (this.state.playlist.playlistTracks[i].notFound) {
-                this.setActiveTrack(this.state.playlist.playlistTracks[i])
-            }
+        let tracks = this.state.playlist.playlistTracks
+        let currentIndex = tracks.map((track) => {return track.key}).indexOf(this.state.activeTrack.key)
+        // Does nothing if at end of list
+        if (currentIndex === 0) {
+            return
+        // Sets active track to previous track
+        } else {
+            this.setState({activeTrack: tracks[currentIndex - 1]})
         }
     }
 
@@ -472,8 +474,7 @@ class App extends React.Component {
                             onLogin={this.getSpotifyAuthUrl}
                             onSave={this.savePlaylist}
                             onClear={this.clearPlaylist}
-                            navigateDown={this.navigateDown}
-                            navigateUp={this.navigateUp}
+                            onClick={this.setActiveTrack}
                         />
                     </div>
                 </div>
