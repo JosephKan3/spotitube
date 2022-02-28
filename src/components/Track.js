@@ -36,9 +36,9 @@ class Track extends React.Component {
             if (this.props.track.duplicate) {
                 return (
                     <div className="Error" id={this.props.track.key} onClick={this.props.onClick}>
-                        <div className="Navigate">
-                            <div className='TrackName'>
-                                <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> resulted in a duplicate song match from Spotify. Manually resolve the conflict with <span className='ErrorTrackTitle'>{this.props.track.duplicateName}</span> or only <span className='ErrorTrackTitle'>{this.props.track.recommendationName}</span> will be saved.</h5>
+                        <div className="Navigate" id={this.props.track.key}>
+                            <div className='TrackName' id={this.props.track.key}>
+                                <h5 className='ErrorMessage' id={this.props.track.key}><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> resulted in a duplicate song match from Spotify. Manually resolve the conflict with <span className='ErrorTrackTitle'>{this.props.track.duplicateName}</span> or only <span className='ErrorTrackTitle'>{this.props.track.recommendationName}</span> will be saved.</h5>
                                 {this.renderAction()}
                             </div>
                         </div>
@@ -48,9 +48,9 @@ class Track extends React.Component {
             } else {
                 return (
                     <div className="Error" id={this.props.track.key} onClick={this.props.onClick}>
-                        <div className="Navigate">
-                            <div className='TrackName'>
-                                <h5 className='ErrorMessage'><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
+                        <div className="Navigate" id={this.props.track.key}>
+                            <div className='TrackName' id={this.props.track.key}>
+                                <h5 className='ErrorMessage' id={this.props.track.key}><span className='ErrorTrackTitle'>{this.props.track.trackName}</span> was not found by Spotify. Manually search for the song or the song will not be added to the playlist.</h5>
                                 {this.renderAction()}
                             </div>
                         </div>
@@ -62,8 +62,8 @@ class Track extends React.Component {
         } else {
             return (
                 <div className="Track" id={this.props.track.key} onClick={this.props.onClick}>
-                    <div className='TrackInformation'>
-                        <div className='TrackName'>
+                    <div className='TrackInformation' id={this.props.track.key}>
+                        <div className='TrackName' id={this.props.track.key}>
                             <img 
                                 className="TrackImage"
                                 src={this.props.track.image} 
