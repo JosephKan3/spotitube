@@ -46,6 +46,7 @@ class Playlist extends React.Component {
                     tracks={this.props.tracks}
                     isRemoval={true}
                     onRemoval={this.props.onRemoval}
+                    onClick={this.props.onClick}
                 />
             </div>
 

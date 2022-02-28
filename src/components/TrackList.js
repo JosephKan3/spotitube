@@ -13,6 +13,7 @@ class TrackList extends React.Component {
                     isRemoval={this.props.isRemoval}
                     onAdd={this.props.onAdd}
                     onRemoval={this.props.onRemoval}
+                    onClick={this.props.onClick}
                     />
                 })}
             </div>

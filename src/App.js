@@ -17,6 +17,7 @@ class App extends React.Component {
                 playlistName: "Enter Playlist Name Here",
                 playlistTracks: []
             },
+            activeTrack: {},
             youtubeCredentials: {},
             youtubeRedirect: false,
             spotifyCredentials: {},
@@ -38,6 +39,9 @@ class App extends React.Component {
         this.updatePlaylistID = this.updatePlaylistID.bind(this)
         this.updateSearchQuery = this.updateSearchQuery.bind(this)
         this.clearPlaylist = this.clearPlaylist.bind(this)
+        this.setActiveTrack = this.setActiveTrack.bind(this)
+        this.navigateDown = this.navigateDown.bind(this)
+        this.navigateUp = this.navigateUp.bind(this)
 
         // Fetching local state
         let localState = JSON.parse(localStorage.getItem("state"))
@@ -46,7 +50,22 @@ class App extends React.Component {
         }
     }
 
-    handleRemoval(track) {
+    // Adding event listener to handle arrow keys changing active track
+    componentDidMount() {
+        window.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowUp") {
+                event.preventDefault()
+                this.navigateUp()
+            } else if (event.key === "ArrowDown") {
+                event.preventDefault()
+                this.navigateDown()
+            } else {
+                return
+            }
+        })
+    }
+
+    async handleRemoval(track) {
         let tracks = this.state.playlist.playlistTracks
         let trackPosition = -1
         // Removing error tracks
@@ -70,6 +89,30 @@ class App extends React.Component {
             return
         // Removing track from tracklist
         } else {
+            console.log(tracks[trackPosition + 1])
+
+            // Moving active track
+            await new Promise((resolve, reject) => {
+                if (trackPosition + 1 < tracks.length) {
+                    this.setState({activeTrack: tracks[trackPosition + 1]}, () => {
+                        console.log(tracks[trackPosition + 1])
+                        document.getElementById(tracks[trackPosition + 1].key).setAttribute("style", "border: thin solid yellow")
+                        resolve()
+                    })
+                } else if (trackPosition - 1 >= 0) {
+                    this.setState({activeTrack: tracks[trackPosition - 1]}, () => {
+                        document.getElementById(tracks[trackPosition - 1].key).setAttribute("style", "border: thin solid yellow")
+                        resolve()
+                    })
+                } else {
+                    console.log("Empty")
+                    this.setState({activeTrack: {}}, () => {
+                        resolve()
+                    })
+                }
+            })
+
+
             tracks.splice(trackPosition, 1)
             this.setState({playlist: {
                 playlistName: this.state.playlist.playlistName,
@@ -82,16 +125,148 @@ class App extends React.Component {
 
     handleAdd(track) {
         let tracks = this.state.playlist.playlistTracks
+        // Avoids duplicate tracks
         if (tracks.find(searchTrack => {
             return track.key === searchTrack.key
         })) {
             return
+        // Adds track
         } else {
-            tracks.push(track)
-            this.setState({playlist: {
-                playlistName: this.state.playlist.playlistName,
-                playlistTracks: tracks
-            }}, () => {
+            // Deletes added track from search results
+            let searchIndex = this.state.searchResults.map(searchTrack => {return searchTrack.key}).indexOf(track.key)
+            let newSearchResults = this.state.searchResults
+            newSearchResults.splice(searchIndex, 1)
+            this.setState({searchResults: newSearchResults}, () => {
+                // Adds track at end if no active track for whatever reason
+                if (!this.state.activeTrack.hasOwnProperty("key")) {
+                    console.log("Huh?")
+                    tracks.push(track)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                // Replaces error tracks
+                } else if (this.state.activeTrack.notFound) {
+                    let activeTrack = this.state.activeTrack
+                    console.log("Not found")
+                    let activeIndex = this.state.playlist.playlistTracks.map((playlistTrack) => {return playlistTrack.key}).indexOf(activeTrack.key)
+                    tracks[activeIndex] = track
+                    console.log(activeIndex)
+                    console.log(tracks)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                // Places below current track if current track is valid
+                } else {
+                    let activeTrack = this.state.activeTrack
+                    console.log("Valid track")
+                    let activeIndex = this.state.playlist.playlistTracks.map((playlistTrack) => {return playlistTrack.key}).indexOf(activeTrack.key)
+                    tracks.splice(activeIndex + 1, 0, track)
+                    console.log(activeIndex)
+                    console.log(tracks)
+                    this.setState({
+                        playlist: {
+                            playlistName: this.state.playlist.playlistName,
+                            playlistTracks: tracks
+                        },
+                        activeTrack: track
+                    }, () => {
+                        document.getElementById(activeTrack.key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
+                        document.getElementById(track.key).setAttribute("style", "border: thin solid yellow")
+                        document.getElementById(track.key).scrollIntoView(true)
+                        localStorage.setItem("state", JSON.stringify(this.state))
+                    })
+                } 
+                return                
+            })
+        }
+    }
+
+    setActiveTrack(event) {
+        let tracks = this.state.playlist.playlistTracks
+        // Clearing active track
+        for (let i = 0; i < tracks.length; i ++) {
+            document.getElementById(tracks[i].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
+        }
+        
+        // Avoids triggering when an inner button is pressed
+        if (event.target.className === "TrackAction") {
+            return
+        }
+
+        // Finding new track index
+        let targetTrackIndex = tracks.map((track) => {return track.key}).indexOf(event.target.id)
+        // If id not found, check parent element
+        if (targetTrackIndex === -1) {
+            targetTrackIndex = tracks.map((track) => {return track.key}).indexOf(event.target.parentNode.id)
+        }
+
+        if (targetTrackIndex === -1) {
+          return  
+        }
+
+        // Setting the active track to the target index
+        let targetTrack = tracks[targetTrackIndex]
+        console.log(targetTrack)
+
+        // Scrolls the active track into view
+        this.setState({
+            activeTrack: targetTrack
+        }, () => {
+            document.getElementById(targetTrack.key).setAttribute("style", "border: thin solid yellow")
+            localStorage.setItem("state", JSON.stringify(this.state))
+        })
+    }
+
+    navigateDown() {
+        let tracks = this.state.playlist.playlistTracks
+        let currentIndex = tracks.map((track) => {return track.key}).indexOf(this.state.activeTrack.key)
+        // Does nothing if at end of list
+        if (currentIndex + 1 >= tracks.length) {
+            return
+        // Sets active track to next track
+        } else {
+            // Changes the active track CSS highlight
+            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
+            document.getElementById(tracks[currentIndex + 1].key).setAttribute("style", "border: thin solid yellow")
+            this.setState({
+                activeTrack: tracks[currentIndex + 1]
+            }, () => {
+                document.getElementById(tracks[currentIndex + 1].key).scrollIntoView(true)
+                localStorage.setItem("state", JSON.stringify(this.state))
+            })
+        }
+    }
+
+    navigateUp() {
+        let tracks = this.state.playlist.playlistTracks
+        let currentIndex = tracks.map((track) => {return track.key}).indexOf(this.state.activeTrack.key)
+        console.log(tracks)
+        // Does nothing if at end of list
+        if (currentIndex === 0) {
+            return
+        // Sets active track to previous track
+        } else {
+            // Changes the active track CSS highlight
+            document.getElementById(tracks[currentIndex].key).setAttribute("style", "border: none border-bottom: 1px solid rgba(256, 256, 256, 0.8)")
+            document.getElementById(tracks[currentIndex - 1].key).setAttribute("style", "border: thin solid yellow")
+            this.setState({
+                activeTrack: tracks[currentIndex - 1]
+            }, () => {
+                document.getElementById(tracks[currentIndex - 1].key).scrollIntoView(true)
                 localStorage.setItem("state", JSON.stringify(this.state))
             })
         }
@@ -234,7 +409,7 @@ class App extends React.Component {
                             notFound: true,
                             trackName: trackNames[i],
                             key: uuidv4(),
-                            duplicate: false
+                            duplicate: false,
                         })
                     } else {
                         // Filters out duplicate search results -- likely indicates an inaccurate search O(n^2), TODO?
@@ -255,7 +430,7 @@ class App extends React.Component {
                                 key: uuidv4(),
                                 duplicate: true,
                                 duplicateName: duplicateName,
-                                recommendationName: recommendation.name
+                                recommendationName: recommendation.name,
                             })
                             continue
                         } else {
@@ -263,12 +438,15 @@ class App extends React.Component {
                         }
                     }
                 }
+                // Setting active track to the first track in the playlist
                 console.log(ytPlaylist)
                 this.setState({
                     playlist: {
                         playlistName: this.state.playlist.playlistName,
                         playlistTracks: ytPlaylist
-                    }}, () => {
+                    },
+                    activeTrack: ytPlaylist[0]
+                }, () => {
                     localStorage.setItem("state", JSON.stringify(this.state))
                     // Enabling import button after search to allow additional requests
                     event.target.innerText = "Done!"
@@ -432,6 +610,7 @@ class App extends React.Component {
                             onLogin={this.getSpotifyAuthUrl}
                             onSave={this.savePlaylist}
                             onClear={this.clearPlaylist}
+                            onClick={this.setActiveTrack}
                         />
                     </div>
                 </div>
