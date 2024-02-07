@@ -5,7 +5,8 @@
     flex-flow: column nowrap;
     padding-bottom: 20px;
     margin: 0px 40px;
-    background-color: rgb(30,215,96);
+    background-color: #282c34;
+    border-radius: 2rem;
 }
 
 @media screen and (max-width: 3000px) {

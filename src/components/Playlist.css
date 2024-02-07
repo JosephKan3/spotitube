@@ -5,8 +5,9 @@
     flex-flow: column nowrap;
     justify-content: flex-start;
     margin: 0px 40px;
-    background-color: rgb(30,215,96);
+    background-color: #282c34;
     padding-bottom: 20px;
+    border-radius: 2rem;
 }
 
 @media screen and (max-width: 3000px) {
@@ -33,7 +34,7 @@
 .PlaylistSave {
     border-radius: 20px;
     display: inline-flex;
-    background-color: #003F00;
+    background-color: #868686;
     color: white;
     font-weight: 500;
     font-size: 18px;
