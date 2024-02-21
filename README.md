@@ -59,3 +59,53 @@ As an open source project, we welcome contributions and suggestions on how to im
 If you have any questions regarding privacy while using Spotitube, or have questions about our practices, please contact us via an issue on the GitHub repository.
 
 This privacy notice is subject to change without notice. We recommend reviewing it periodically.
+
+## Terms of Service
+
+### Acceptance of Terms
+
+By accessing or using the Spotitube service, you agree to be bound by these terms of service ("Terms"). If you disagree with any part of the terms, then you do not have permission to access the service.
+
+### Changes to Terms
+
+We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
+
+### Use License
+
+Spotitube grants you a personal, worldwide, royalty-free, non-assignable, and non-exclusive license to use the software provided to you as part of the service. This license is for the sole purpose of enabling you to use the service as provided by Spotitube, in the manner permitted by these Terms.
+
+### Your Account
+
+If you use Spotitube, you are responsible for maintaining the security of your account, and you are fully responsible for all activities that occur under the account and any other actions taken in connection with it.
+
+### Service Modifications
+
+Spotitube reserves the right at any time to modify or discontinue, temporarily or permanently, the service (or any part of it) with or without notice.
+
+### End User Data
+
+Spotitube does not store any user data, and all interactions with Spotify and YouTube through the service are conducted under the users' explicit consent and control. Spotitube is not responsible for any data processing conducted by Spotify, YouTube, or other third-party services linked to through the service.
+
+### Intellectual Property
+
+This service and its original content, features, and functionality are and will remain the exclusive property of Spotitube and its licensors.
+
+### Links to Other Web Sites
+
+Our service may contain links to third-party web sites or services that are not owned or controlled by Spotitube.
+
+Spotitube has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party web sites or services. We do not warrant the offerings of any of these entities/individuals or their websites.
+
+### Termination
+
+We may terminate or suspend your access to the service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.
+
+### Governing Law
+
+These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which Spotitube operates, without regard to its conflict of law provisions.
+
+### Contact Us
+
+If you have any questions about these Terms, please contact us through an issue on the GitHub repository.
+
+Your access to and use of the service is conditioned on your acceptance of and compliance with these Terms. These Terms apply to all visitors, users, and others who access or use the service.
