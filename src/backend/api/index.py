@@ -28,7 +28,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 #Youtube OAuth Client
 REDIRECT_URI=os.environ.get("REDIRECT_URI")
 PLAYLIST_MAX_RESULTS=os.environ.get("MAX_PLAYLIST_RESULTS")
-CLIENT_SECRETS_FILE = "./clientSecret.json"
+CLIENT_SECRETS_JSON = json.loads(os.getenv('CLIENT_SECRET_JSON'))
 SCOPES = ['https://www.googleapis.com/auth/youtube.force-ssl']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
